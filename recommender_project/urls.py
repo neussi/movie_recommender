@@ -11,4 +11,6 @@ urlpatterns = [
     path('recommend/', views.recommend, name='recommend'),
     path('user-history/', views.user_history, name='user_history'),
     path('contact-submit/', views.contact, name='contact'),
+    path('movies-catalog/', views.movies_catalog, name='movies_catalog'),
+    path('new-user-recommend/', views.new_user_recommend, name='new_user_recommend'),
 ]

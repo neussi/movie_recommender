@@ -3,90 +3,223 @@
 {% block title %}Simulateur de Recommandations - MovieGCN Rec{% endblock %}
 
 {% block extra_head %}
-<!-- Vis.js standalone package for drawing the bipartite graph -->
 <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 <style>
-    #network-viz {
-        height: 500px;
-        background: #f8fafc;
+    #network-viz, #new-network-viz {
+        height: 460px;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border: 1px solid #e2e8f0;
         border-radius: 20px;
+    }
+    .tab-btn { transition: all 0.2s ease; }
+    .tab-btn.active {
+        background: #be123c;
+        color: #fff;
+        box-shadow: 0 4px 14px rgba(190,18,60,0.25);
+    }
+    .tab-btn:not(.active) { background: #fff; color: #64748b; }
+    .star-rating { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 2px; }
+    .star-rating input { display: none; }
+    .star-rating label {
+        font-size: 22px; color: #cbd5e1; cursor: pointer; transition: color 0.15s;
+    }
+    .star-rating input:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #f59e0b; }
+    .movie-rating-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 12px 14px;
+        transition: border-color 0.2s;
+    }
+    .movie-rating-card:hover { border-color: #fda4af; }
+    .score-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 9999px;
+        font-size: 10px;
+        font-weight: 800;
+        background: #fff1f2;
+        color: #be123c;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-6 py-12">
-    <div class="mb-10 space-y-2">
+    <div class="mb-8 space-y-2">
         <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Simulateur Collaboratif</span>
         <h2 class="text-3xl font-extrabold text-slate-900">Recommandateur GNN</h2>
-        <p class="text-slate-500 text-sm">Sélectionnez un identifiant utilisateur pour charger ses goûts historiques et générer ses recommandations personnalisées de films.</p>
+        <p class="text-slate-500 text-sm">Sélectionnez un utilisateur existant ou créez un nouveau profil pour obtenir des recommandations personnalisées.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- Left: Options & History -->
-        <div class="lg:col-span-4 flex flex-col gap-8">
-            <div class="bg-white premium-card p-6">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Profil Cible</h4>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs text-slate-500 mb-1.5 font-bold">Choisir un ID Utilisateur :</label>
-                        <select id="user-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-rose-500 focus:bg-white text-sm text-slate-800 font-bold transition">
-                            <option value="" disabled selected>-- Sélectionner --</option>
-                            {% for uid in users_list %}
-                            <option value="{{ uid }}">Utilisateur {{ uid }}</option>
-                            {% empty %}
-                            <option value="1">Utilisateur 1</option>
-                            <option value="2">Utilisateur 2</option>
-                            {% endfor %}
-                        </select>
+    <!-- Tabs -->
+    <div class="flex gap-3 mb-8">
+        <button id="tab-existing" class="tab-btn active px-6 py-2.5 rounded-xl font-bold text-sm" onclick="switchTab('existing')">
+            Utilisateur Existant
+        </button>
+        <button id="tab-new" class="tab-btn px-6 py-2.5 rounded-xl font-bold text-sm border border-slate-200" onclick="switchTab('new')">
+            Nouveau Profil
+        </button>
+    </div>
+
+    <!-- =================== TAB: EXISTING USER =================== -->
+    <div id="panel-existing">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left -->
+            <div class="lg:col-span-4 flex flex-col gap-8">
+                <div class="bg-white premium-card p-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Profil Cible</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1.5 font-bold">Choisir un ID Utilisateur :</label>
+                            <select id="user-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-rose-500 text-sm text-slate-800 font-bold transition">
+                                <option value="" disabled selected>-- Sélectionner --</option>
+                                {% for uid in users_list %}
+                                <option value="{{ uid }}">Utilisateur {{ uid }}</option>
+                                {% empty %}
+                                <option value="1">Utilisateur 1</option>
+                                <option value="2">Utilisateur 2</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button id="get-recommendations-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-rose-500/10 active:scale-[0.98]">
+                            Recommander les Films
+                        </button>
                     </div>
-                    <button id="get-recommendations-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-rose-500/10 active:scale-[0.98]">
-                        Recommander les Films
-                    </button>
+                </div>
+
+                <div id="history-card" class="bg-white premium-card p-6 hidden">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Films Tres Apprecies (Historique)</h4>
+                    <div class="overflow-y-auto max-h-[350px]">
+                        <ul id="history-list" class="divide-y divide-slate-100 text-xs text-slate-600 space-y-2"></ul>
+                    </div>
                 </div>
             </div>
 
-            <!-- Rated movies preview -->
-            <div id="history-card" class="bg-white premium-card p-6 hidden">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Films Très Appréciés (Historique)</h4>
-                <div class="overflow-y-auto max-h-[350px]">
-                    <ul id="history-list" class="divide-y divide-slate-100 text-xs text-slate-600 space-y-2">
-                        <!-- Dynamic -->
-                    </ul>
+            <!-- Right -->
+            <div class="lg:col-span-8 flex flex-col gap-8">
+                <div class="bg-white premium-card p-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Graphe Bipartite d'Interactions</h4>
+                    <div id="network-viz"></div>
+                    <div class="flex flex-wrap gap-4 justify-center text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-4">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>Utilisateur Cible</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Historique (Notes >= 4)</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>Recommandations IA</span>
+                    </div>
+                </div>
+
+                <div id="recommendations-card" class="bg-white premium-card p-6 hidden">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Top 10 Recommandations</h4>
+                    <div class="overflow-x-auto border border-slate-100 rounded-xl">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+                                    <th class="p-4">Film</th>
+                                    <th class="p-4">Genre</th>
+                                    <th class="p-4">Score d'Interet</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rec-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Right: Viz & Suggestions -->
-        <div class="lg:col-span-8 flex flex-col gap-8">
-            <!-- Visualization -->
-            <div class="bg-white premium-card p-6 flex flex-col">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Graphe Bipartite d'Interactions</h4>
-                <div id="network-viz"></div>
-                <div class="flex flex-wrap gap-4 justify-center text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-4">
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>Utilisateur Cible</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Historique d'Achat (Notes >= 4)</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>Recommandations IA</span>
+    <!-- =================== TAB: NEW USER =================== -->
+    <div id="panel-new" class="hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left: Form -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <!-- Identity -->
+                <div class="bg-white premium-card p-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">1. Votre Identite</h4>
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1.5 font-bold">Prenom / Pseudo</label>
+                        <input id="new-user-name" type="text" placeholder="Ex: Alexandre" maxlength="30"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-rose-500 focus:bg-white text-sm text-slate-800 font-medium transition">
+                    </div>
                 </div>
+
+                <!-- Movie Search & Rating -->
+                <div class="bg-white premium-card p-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">2. Notez des Films que vous Connaissez</h4>
+                    <p class="text-xs text-slate-400 mb-4">Notez au moins 3 films pour affiner vos recommandations.</p>
+                    <div class="relative mb-4">
+                        <input id="movie-search" type="text" placeholder="Rechercher un film..." autocomplete="off"
+                            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pl-9 focus:outline-none focus:border-rose-500 focus:bg-white text-sm text-slate-700 transition">
+                        <svg class="absolute left-3 top-3 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+
+                    <!-- Search results dropdown -->
+                    <div id="search-results" class="hidden mb-4 border border-slate-200 rounded-xl overflow-hidden max-h-52 overflow-y-auto shadow-sm">
+                    </div>
+
+                    <!-- Rated movies list -->
+                    <div id="rated-movies-list" class="space-y-2 max-h-64 overflow-y-auto">
+                        <p class="text-xs text-slate-400 text-center py-4" id="empty-rated-msg">Aucun film noté pour l'instant. Recherchez des films ci-dessus.</p>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-between">
+                        <span id="rated-count" class="text-xs text-slate-400 font-bold">0 film(s) noté(s)</span>
+                        <button id="clear-ratings-btn" class="text-xs text-rose-500 hover:text-rose-700 font-bold hidden" onclick="clearAllRatings()">Tout effacer</button>
+                    </div>
+                </div>
+
+                <button id="get-new-recommendations-btn"
+                    class="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white font-bold py-4 px-6 rounded-2xl transition shadow-lg shadow-rose-500/20 active:scale-[0.98] text-sm">
+                    Generer Mes Recommandations
+                </button>
             </div>
 
-            <!-- Recommendation Table -->
-            <div id="recommendations-card" class="bg-white premium-card p-6 hidden">
-                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Top 10 Recommandations</h4>
-                <div class="overflow-x-auto border border-slate-100 rounded-xl">
-                    <table class="w-full text-left text-xs border-collapse">
-                        <thead>
-                            <tr class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
-                                <th class="p-4">Film</th>
-                                <th class="p-4">Genre</th>
-                                <th class="p-4">Score d'Intérêt</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rec-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
-                            <!-- Dynamic -->
-                        </tbody>
-                    </table>
+            <!-- Right: Results -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                <!-- Empty state -->
+                <div id="new-empty-state" class="bg-white premium-card p-10 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
+                    <div class="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/>
+                        </svg>
+                    </div>
+                    <p class="text-slate-500 font-bold text-sm">Notez des films et lancez la recommandation</p>
+                    <p class="text-slate-400 text-xs mt-1">Le modele LightGCN construira votre profil a partir de vos notes</p>
+                </div>
+
+                <!-- Graph -->
+                <div id="new-graph-card" class="bg-white premium-card p-6 hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Votre Graphe de Recommandation</h4>
+                        <span id="new-user-label" class="px-3 py-1 bg-violet-50 text-violet-700 text-xs font-bold rounded-full"></span>
+                    </div>
+                    <div id="new-network-viz"></div>
+                    <div class="flex flex-wrap gap-4 justify-center text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-4">
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-violet-600"></span>Nouveau Profil</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Films Notes</span>
+                        <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>Recommandations IA</span>
+                    </div>
+                </div>
+
+                <!-- Recommendations Table -->
+                <div id="new-recommendations-card" class="bg-white premium-card p-6 hidden">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Top 10 Recommandations Personnalisees</h4>
+                    <div class="overflow-x-auto border border-slate-100 rounded-xl">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+                                    <th class="p-4">#</th>
+                                    <th class="p-4">Film</th>
+                                    <th class="p-4">Genre</th>
+                                    <th class="p-4">Score IA</th>
+                                </tr>
+                            </thead>
+                            <tbody id="new-rec-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -94,22 +227,31 @@
 </div>
 
 <script>
-    let network = null;
+    // -------- TAB SWITCHING --------
+    function switchTab(tab) {
+        document.getElementById('panel-existing').classList.toggle('hidden', tab !== 'existing');
+        document.getElementById('panel-new').classList.toggle('hidden', tab !== 'new');
+        document.getElementById('tab-existing').classList.toggle('active', tab === 'existing');
+        document.getElementById('tab-new').classList.toggle('active', tab === 'new');
+        document.getElementById('tab-existing').classList.toggle('border', tab !== 'existing');
+        document.getElementById('tab-existing').classList.toggle('border-slate-200', tab !== 'existing');
+        document.getElementById('tab-new').classList.toggle('border', tab !== 'new');
+        document.getElementById('tab-new').classList.toggle('border-slate-200', tab !== 'new');
+    }
+
+    // -------- EXISTING USER --------
+    let existingNetwork = null;
 
     document.getElementById('get-recommendations-btn').addEventListener('click', function() {
         const userId = document.getElementById('user-select').value;
-        if (!userId) {
-            alert("Veuillez d'abord sélectionner un utilisateur.");
-            return;
-        }
+        if (!userId) { alert("Veuillez d'abord sélectionner un utilisateur."); return; }
 
-        // Fetch User History
         fetch(`/user-history/?user_id=${userId}`)
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
             const hList = document.getElementById('history-list');
             hList.innerHTML = '';
-            data.history.forEach(item => {
+            (data.history || []).forEach(item => {
                 const li = document.createElement('li');
                 li.className = 'py-2 flex justify-between items-start gap-4';
                 li.innerHTML = `
@@ -117,23 +259,16 @@
                         <span class="font-bold text-slate-800">${item.title}</span>
                         <span class="block text-[10px] text-slate-400 capitalize mt-0.5">${item.genres}</span>
                     </div>
-                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-extrabold text-[10px]">★ ${item.rating}</span>
-                `;
+                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-extrabold text-[10px]">★ ${item.rating}</span>`;
                 hList.appendChild(li);
             });
             document.getElementById('history-card').classList.remove('hidden');
         });
 
-        // Fetch Recommendations & Graph
         fetch(`/recommend/?user_id=${userId}`)
-        .then(res => res.json())
+        .then(r => r.json())
         .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-
-            // Populate recommendations table
+            if (data.error) { alert(data.error); return; }
             const tbody = document.getElementById('rec-tbody');
             tbody.innerHTML = '';
             data.recommendations.forEach(rec => {
@@ -142,41 +277,196 @@
                 tr.innerHTML = `
                     <td class="p-4 font-bold text-slate-800">${rec.title}</td>
                     <td class="p-4 capitalize text-slate-500">${rec.genres}</td>
-                    <td class="p-4 font-extrabold text-rose-600">${rec.score.toFixed(3)}</td>
-                `;
+                    <td class="p-4"><span class="score-badge">${rec.score.toFixed(3)}</span></td>`;
                 tbody.appendChild(tr);
             });
             document.getElementById('recommendations-card').classList.remove('hidden');
 
-            // Draw Vis.js network
             const container = document.getElementById('network-viz');
-            const graphData = {
-                nodes: new vis.DataSet(data.graph.nodes),
-                edges: new vis.DataSet(data.graph.edges)
+            const graphData = { nodes: new vis.DataSet(data.graph.nodes), edges: new vis.DataSet(data.graph.edges) };
+            const opts = {
+                nodes: { borderWidth: 2, font: { size: 11, face: 'Outfit', color: '#1e293b' } },
+                edges: { color: { color: '#cbd5e1', highlight: '#f43f5e' }, width: 1.5, smooth: { type: 'continuous' } },
+                physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -26, centralGravity: 0.005, springLength: 100, springConstant: 0.18 } }
             };
-            const options = {
-                nodes: {
-                    borderWidth: 2,
-                    font: { size: 11, face: 'Outfit', color: '#1e293b' }
-                },
-                edges: {
-                    color: { color: '#cbd5e1', highlight: '#f43f5e' },
-                    width: 1.5,
-                    smooth: { type: 'continuous' }
-                },
-                physics: {
-                    solver: 'forceAtlas2Based',
-                    forceAtlas2Based: {
-                        gravitationalConstant: -26,
-                        centralGravity: 0.005,
-                        springLength: 100,
-                        springConstant: 0.18
-                    }
-                }
-            };
-            network = new vis.Network(container, graphData, options);
+            if (existingNetwork) existingNetwork.destroy();
+            existingNetwork = new vis.Network(container, graphData, opts);
         })
-        .catch(err => alert("Erreur de récupération des données."));
+        .catch(() => alert("Erreur de récupération des données."));
     });
+
+    // -------- NEW USER --------
+    let ratedMovies = {};   // { movieId: { title, genres, rating } }
+    let newNetwork = null;
+    let searchTimeout = null;
+
+    // Debounce search
+    document.getElementById('movie-search').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const q = this.value.trim();
+        searchTimeout = setTimeout(() => fetchMovies(q), 300);
+    });
+
+    function fetchMovies(q) {
+        const url = q ? `/movies-catalog/?q=${encodeURIComponent(q)}` : '/movies-catalog/';
+        fetch(url)
+        .then(r => r.json())
+        .then(data => renderSearchResults(data.movies || []));
+    }
+
+    // Load initial catalog on tab open
+    document.getElementById('tab-new').addEventListener('click', () => {
+        if (Object.keys(ratedMovies).length === 0) fetchMovies('');
+    });
+
+    function renderSearchResults(movies) {
+        const container = document.getElementById('search-results');
+        if (!movies.length) { container.classList.add('hidden'); return; }
+        container.innerHTML = '';
+        container.classList.remove('hidden');
+        movies.forEach(m => {
+            if (ratedMovies[m.movieId]) return;  // already rated
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition';
+            div.innerHTML = `
+                <div>
+                    <p class="text-xs font-bold text-slate-800">${m.title}</p>
+                    <p class="text-[10px] text-slate-400 capitalize">${m.genres}</p>
+                </div>
+                <button class="ml-3 text-[10px] font-bold text-rose-600 hover:text-rose-800 whitespace-nowrap bg-rose-50 px-2.5 py-1 rounded-lg" onclick="addMovie(${m.movieId}, '${m.title.replace(/'/g,"\\'")}', '${m.genres.replace(/'/g,"\\'")}')">+ Ajouter</button>`;
+            container.appendChild(div);
+        });
+    }
+
+    function addMovie(movieId, title, genres) {
+        if (ratedMovies[movieId]) return;
+        ratedMovies[movieId] = { title, genres, rating: 3 };
+        renderRatedMovies();
+        document.getElementById('search-results').classList.add('hidden');
+        document.getElementById('movie-search').value = '';
+    }
+
+    function removeMovie(movieId) {
+        delete ratedMovies[movieId];
+        renderRatedMovies();
+    }
+
+    function setRating(movieId, rating) {
+        if (ratedMovies[movieId]) ratedMovies[movieId].rating = rating;
+    }
+
+    function clearAllRatings() {
+        ratedMovies = {};
+        renderRatedMovies();
+    }
+
+    function renderRatedMovies() {
+        const container = document.getElementById('rated-movies-list');
+        const emptyMsg = document.getElementById('empty-rated-msg');
+        const count = Object.keys(ratedMovies).length;
+        document.getElementById('rated-count').textContent = `${count} film(s) noté(s)`;
+        document.getElementById('clear-ratings-btn').classList.toggle('hidden', count === 0);
+
+        if (count === 0) {
+            container.innerHTML = '';
+            container.appendChild(emptyMsg);
+            emptyMsg.classList.remove('hidden');
+            return;
+        }
+        emptyMsg.classList.add('hidden');
+        container.innerHTML = '';
+
+        Object.entries(ratedMovies).forEach(([movieId, m]) => {
+            const card = document.createElement('div');
+            card.className = 'movie-rating-card';
+            const stars = [5,4,3,2,1].map(v => `
+                <input type="radio" name="star_${movieId}" id="s${movieId}_${v}" value="${v}" ${m.rating === v ? 'checked' : ''} onchange="setRating(${movieId}, ${v})">
+                <label for="s${movieId}_${v}" title="${v} étoiles">★</label>
+            `).join('');
+            card.innerHTML = `
+                <div class="flex items-start justify-between gap-2 mb-1">
+                    <div>
+                        <p class="text-xs font-bold text-slate-800">${m.title}</p>
+                        <p class="text-[10px] text-slate-400 capitalize">${m.genres}</p>
+                    </div>
+                    <button onclick="removeMovie(${movieId})" class="text-slate-300 hover:text-rose-400 transition text-lg leading-none mt-0.5">x</button>
+                </div>
+                <div class="star-rating mt-1">${stars}</div>`;
+            container.appendChild(card);
+        });
+    }
+
+    document.getElementById('get-new-recommendations-btn').addEventListener('click', function() {
+        const name = document.getElementById('new-user-name').value.trim() || 'Nouvel Utilisateur';
+        const count = Object.keys(ratedMovies).length;
+        if (count < 1) { alert('Veuillez noter au moins 1 film pour générer des recommandations.'); return; }
+
+        const ratings = Object.entries(ratedMovies).map(([movieId, m]) => ({
+            movieId: parseInt(movieId),
+            rating: m.rating
+        }));
+
+        this.disabled = true;
+        this.textContent = 'Calcul en cours...';
+
+        fetch('/new-user-recommend/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+            body: JSON.stringify({ name, ratings })
+        })
+        .then(r => r.json())
+        .then(data => {
+            this.disabled = false;
+            this.textContent = 'Generer Mes Recommandations';
+
+            if (data.error) { alert(data.error); return; }
+
+            document.getElementById('new-empty-state').classList.add('hidden');
+            document.getElementById('new-user-label').textContent = data.user_name;
+
+            // Fill table
+            const tbody = document.getElementById('new-rec-tbody');
+            tbody.innerHTML = '';
+            data.recommendations.forEach((rec, i) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/40 transition';
+                tr.innerHTML = `
+                    <td class="p-4 text-slate-400 font-bold">${i+1}</td>
+                    <td class="p-4 font-bold text-slate-800">${rec.title}</td>
+                    <td class="p-4 capitalize text-slate-500 text-[11px]">${rec.genres}</td>
+                    <td class="p-4"><span class="score-badge">${rec.score.toFixed(3)}</span></td>`;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('new-graph-card').classList.remove('hidden');
+            document.getElementById('new-recommendations-card').classList.remove('hidden');
+
+            // Draw graph
+            const container = document.getElementById('new-network-viz');
+            const graphData = { nodes: new vis.DataSet(data.graph.nodes), edges: new vis.DataSet(data.graph.edges) };
+            const opts = {
+                nodes: { borderWidth: 2, font: { size: 11, face: 'Outfit', color: '#1e293b' } },
+                edges: { color: { color: '#c4b5fd', highlight: '#f43f5e' }, width: 1.5, smooth: { type: 'continuous' } },
+                physics: { solver: 'forceAtlas2Based', forceAtlas2Based: { gravitationalConstant: -28, centralGravity: 0.005, springLength: 110, springConstant: 0.18 } }
+            };
+            if (newNetwork) newNetwork.destroy();
+            newNetwork = new vis.Network(container, graphData, opts);
+        })
+        .catch(() => {
+            this.disabled = false;
+            this.textContent = 'Generer Mes Recommandations';
+            alert("Erreur lors du calcul des recommandations.");
+        });
+    });
+
+    function getCookie(name) {
+        let v = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(c => {
+                c = c.trim();
+                if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+            });
+        }
+        return v;
+    }
 </script>
 {% endblock %}
