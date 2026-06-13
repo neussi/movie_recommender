@@ -1,0 +1,209 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{parskip}
+
+\geometry{top=2.5cm, bottom=3cm, left=2.5cm, right=2.5cm}
+
+\definecolor{primary}{RGB}{0,70,127}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=primary,
+  urlcolor=primary
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+\fancyhead[L]{\small UE : PROJETS D'IA (AIA4)}
+\fancyhead[R]{\small ENSPY -- Génie Informatique}
+\fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 21T2894}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
+
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 21T2894}
+    \fancyfoot[C]{\thepage}
+    \fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
+    \renewcommand{\footrulewidth}{0.4pt}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+\titleformat{\section}{\large\bfseries\color{primary}}{}{0em}{\thesection\quad}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{\thesubsection\quad}
+
+\setlist[itemize]{noitemsep, topsep=4pt, leftmargin=1.5em}
+\setlist[enumerate]{noitemsep, topsep=4pt, leftmargin=1.8em}
+
+\begin{document}
+
+%---------------------------------------------------------------
+%  PAGE DE TITRE
+%---------------------------------------------------------------
+\begin{titlepage}
+  \centering
+  \includegraphics[width=4cm]{enspy.png}\\[0.5cm]
+  {\Large\bfseries ÉCOLE NATIONALE SUPÉRIEURE POLYTECHNIQUE DE YAOUNDÉ\par}
+  \vspace{0.2cm}
+  {\normalsize Département de Génie Informatique\par}
+  {\normalsize Cycle des Ingénieurs du Numérique -- Filière : AIA4\par}
+  \vspace{2cm}
+  
+  {\LARGE\bfseries\color{primary} PROPOSITION DE PLAN DE TRAVAIL\par}
+  \vspace{0.5cm}
+  {\large Méthodologies, Démarches et Jalons de Réalisation des Projets Pratiques\par}
+  \vspace{0.2cm}
+  {\normalsize UE : Projets d'Intelligence Artificielle (AIA4)\par}
+  \vspace{2.5cm}
+  
+  \begin{tabular}{rl}
+    \textbf{Rédigé par :} & \textbf{NEUSSI NJIETCHEU Patrice Eugene} \\[4pt]
+    \textbf{Matricule :}    & \textbf{21T2894} \\[4pt]
+    \textbf{Classe :}       & \textbf{AIA4} (Intelligence Artificielle) \\[4pt]
+    \textbf{Sous la direction de :} & \textbf{M. Bitha Junior} (Enseignant ENSPY) \\
+  \end{tabular}
+  \vfill
+  {\small Année Académique 2025--2026\par}
+\end{titlepage}
+
+%---------------------------------------------------------------
+%  TABLE DES MATIÈRES
+%---------------------------------------------------------------
+\tableofcontents
+\newpage
+
+%---------------------------------------------------------------
+%  INTRODUCTION
+%---------------------------------------------------------------
+\section{Introduction et Démarche Globale}
+
+Ce document décrit la proposition de plan de travail détaillé et les méthodologies scientifiques adoptées pour mener à bien les trois projets d'Intelligence Artificielle qui nous ont été alloués dans le cadre du cours AIA4. Afin de garantir des solutions rigoureuses et prêtes pour la production, nous adoptons une méthodologie inspirée du cycle CRISP-DM, adaptée aux contraintes spécifiques du déploiement serverless.
+
+\subsection{Les Trois Projets Alloués}
+Les trois chantiers techniques abordés dans ce plan sont :
+\begin{enumerate}
+    \item \textbf{Projet 1 : Réseaux de neurones convolutifs pour systèmes de recommandations} (Modélisation de graphes d'interaction par LightGCN).
+    \item \textbf{Projet 2 : Construction d’un moteur de recherche visuel} (Recherche d'images sémantique et colorimétrique MobileNetV2 / HSV).
+    \item \textbf{Projet 3 : Prédiction du comportement des clients bancaires} (Modélisation d'ensemble pour le scoring prédictif).
+\end{enumerate}
+
+\subsection{Démarche de Mise en Œuvre Commune}
+Chaque projet suit un pipeline rigoureux en six phases :
+\[
+\text{Cadrage} \rightarrow \text{Exploration (EDA)} \rightarrow \text{Modélisation} \rightarrow \text{Validation} \rightarrow \text{Intégration Web} \rightarrow \text{Déploiement}
+\]
+
+\newpage
+
+%---------------------------------------------------------------
+%  PROJET 1
+%---------------------------------------------------------------
+\section{Projet 1 -- Systèmes de Recommandations Graph Neural Networks (LightGCN)}
+
+\subsection{Méthode et Solution Envisagées}
+Pour dépasser les limites de la factorisation de matrices classique (SVD) qui n'apprend que les interactions du premier ordre, nous proposons d'exploiter les structures de graphes relationnels.
+\begin{itemize}
+    \item \textbf{Représentation Bipartite :} Modélisation des interactions MovieLens sous forme de graphe bipartite non orienté $G = (U \cup I, E)$.
+    \item \textbf{Propagation par GNN (LightGCN) :} Normalisation symétrique de l'adjacence ($\tilde{A} = D^{-1/2} A D^{-1/2}$) et convolution sur 3 couches sans transformations non linéaires ni activations pour optimiser la vitesse d'apprentissage.
+    \item \textbf{Apprentissage Bayésien :} Optimisation de la perte pairwise BPR (Bayesian Personalized Ranking) avec l'optimiseur Adam.
+    \item \textbf{Stratégie de Repli (Fallback) :} En cas d'indisponibilité de PyTorch en production serverless, calcul des scores par produit matriciel NumPy sur les vecteurs d'embeddings pré-calculés.
+\end{itemize}
+
+\subsection{Plan de Travail Détaillé et Jalons}
+\begin{itemize}
+    \item \textbf{Phase 1 : Exploration et Analyse (Jalons J1-J3) :} Analyse de la rareté de la matrice d'interactions, distribution des évaluations (biais des notes) et tracé de la longue traîne du catalogue.
+    \item \textbf{Phase 2 : Implémentation du Modèle (Jalons J4-J7) :} Codage de la classe de propagation `LightGCN` sous PyTorch, création de la boucle d'entraînement BPR Loss et écriture du module de validation (Recall@10 et NDCG@10).
+    \item \textbf{Phase 3 : Intégration et Déploiement (Jalons J8-J10) :} Création de l'application Django, implémentation d'une interface de visualisation interactive du sous-graphe en Vis.js, sérialisation pickle des vecteurs, et mise en production Vercel avec gestion statique WhiteNoise.
+\end{itemize}
+
+\newpage
+
+%---------------------------------------------------------------
+%  PROJET 2
+%---------------------------------------------------------------
+\section{Projet 2 -- Moteur de Recherche Visuel de Vêtements (CBIR)}
+
+\subsection{Méthode et Solution Envisagées}
+Le moteur de recherche d'images s'appuie sur une architecture hybride à extraction de descripteurs adaptative :
+\begin{itemize}
+    \item \textbf{Descripteurs Sémantiques Profonds (MobileNetV2) :} Utilisation d'un CNN avec convolutions séparables en profondeur et goulots d'étranglement linéaires, pré-entraîné sur ImageNet, pour extraire un embedding de 1280 dimensions après Global Average Pooling.
+    \item \textbf{Descripteurs de Repli Légers (HSV + Spatial) :} En production serverless (sans PyTorch), calcul d'un histogramme joint 3D Hue-Saturation-Value à 128 dimensions, concaténé à une disposition spatiale en nuances de gris normalisée Z-score (256 dimensions) pour un vecteur de 384 dimensions.
+    \item \textbf{Recherche de Similarité :} Calcul de la similarité cosinus entre la requête et le catalogue indexé.
+\end{itemize}
+
+\subsection{Plan de Travail Détaillé et Jalons}
+\begin{itemize}
+    \item \textbf{Phase 1 : Préparation du Catalogue (Jalons J1-J2) :} Constitution de la base de vêtements (150 images), redimensionnement et création du script d'indexation hors-ligne (`train\_visual.py`).
+    \item \textbf{Phase 2 : Développement des Algorithmes (Jalons J3-J6) :} Écriture du code d'extraction MobileNetV2 et de l'extracteur HSV/Spatial sous NumPy/PIL. Validation sur 30 requêtes test pour mesurer la précision moyenne au Top-5 (P@5).
+    \item \textbf{Phase 3 : Interface utilisateur et Déploiement (Jalons J7-J10) :} Création de l'interface Django (formulaire de téléversement Drag-and-Drop, grille d'affichage des résultats triés par score de similarité) et déploiement serverless sur Vercel.
+\end{itemize}
+
+\newpage
+
+%---------------------------------------------------------------
+%  PROJET 3
+%---------------------------------------------------------------
+\section{Projet 3 -- Prédiction du Comportement des Clients Bancaires}
+
+\subsection{Méthode et Solution Envisagées}
+Le scoring prédictif des prospects (campagne de marketing direct pour dépôts à terme) est basé sur le dataset UCI Bank Marketing :
+\begin{itemize}
+    \item \textbf{Feature Engineering :} Traitement des valeurs manquantes, encodage OHE (One-Hot Encoding) pour les attributs qualitatifs (`job`, `education`, `marital`), standardisation robuste des variables continues (`age`, `balance`, `duration`).
+    \item \textbf{Traitement du Déséquilibre :} Ajustement des poids de classe inversement proportionnels aux fréquences empiriques.
+    \item \textbf{Modélisation d'Ensemble hybride :} Entraînement de trois modèles complémentaires :
+    \begin{enumerate}
+        \item Régression Logistique régularisée L2 (L-BFGS).
+        \item Forêt Aléatoire (100 arbres, critère d'impureté de Gini).
+        \item Perceptron Multicouche (MLP) PyTorch ($64 \rightarrow 32 \rightarrow 1$ neurones) avec régularisation Dropout.
+    \end{enumerate}
+    \item \textbf{Soft Voting :} Fusion des prédictions en faisant la moyenne arithmétique des probabilités d'adhésion individuelles.
+\end{itemize}
+
+\subsection{Plan de Travail Détaillé et Jalons}
+\begin{itemize}
+    \item \textbf{Phase 1 : Analyse Exploratoire (Jalons J1-J3) :} Analyse univariée et multivariée sous Pandas, tracé des matrices de corrélation de Spearman pour identifier l'influence des variables de communication (comme la durée d'appel).
+    \item \textbf{Phase 2 : Pipeline de Modélisation (Jalons J4-J7) : } Conception du pipeline de prétraitement `ColumnTransformer`, entraînement des classificateurs sous scikit-learn et PyTorch, tracé des courbes ROC et matrices de confusion.
+    \item \textbf{Phase 3 : Intégration et Production (Jalons J8-J10) :} Conception de l'interface Django offrant deux modes (prédiction unitaire interactive et prédiction batch par import de fichier CSV), sérialisation du pipeline d'inference, et déploiement Vercel.
+\end{itemize}
+
+\newpage
+
+%---------------------------------------------------------------
+%  CONCLUSION ET JALONS DE LIVRAISON
+%---------------------------------------------------------------
+\section{Jalons de Livraison et Planification Temporelle}
+
+Le tableau ci-dessous résume le calendrier de travail sur les 10 semaines allouées pour le développement conjoint des trois solutions.
+
+\bigskip
+
+\begin{tabularx}{\linewidth}{cXXl}
+  \toprule
+  \textbf{Semaine} & \textbf{Tâche Principale} & \textbf{Objectif Scientifique} & \textbf{Livrable} \\
+  \midrule
+  S1 -- S2 & EDA \& Préparation données & Compréhension des distributions & Notebooks d'analyse \\
+  S3 -- S4 & Codage algorithmes PyTorch & Initialisation LightGCN et MLP & Scripts `train\_*.py` \\
+  S5 -- S6 & Validation quantitative & Optimisation métriques ROC/Recall & Courbes et Tableaux \\
+  S7 -- S8 & Intégration Django Web & Architecture MVC et routage & Code local Django \\
+  S9 -- S10 & Optimisation \& Vercel & Intégration WhiteNoise et logs & Liens de Production \\
+  \bottomrule
+\end{tabularx}
+
+\bigskip
+
+La mise en œuvre scrupuleuse de ce plan de travail a permis de livrer trois applications robustes, scientifiquement justifiées et hébergées sur le Cloud en environnement serverless.
+
+\end{document}
