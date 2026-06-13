@@ -27,15 +27,15 @@
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0.4pt}
-\fancyhead[L]{\small UE : PROJETS D'IA (AIA4)}
+\fancyhead[L]{\small UE : ANI-IA 4067 (AIA4)}
 \fancyhead[R]{\small ENSPY -- Génie Informatique}
-\fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 21T2894}
+\fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 24P820}
 \fancyfoot[C]{\thepage}
 \fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
 
 \fancypagestyle{plain}{
     \fancyhf{}
-    \fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 21T2894}
+    \fancyfoot[L]{\small NEUSSI NJIETCHEU Patrice Eugene -- 24P820}
     \fancyfoot[C]{\thepage}
     \fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
     \renewcommand{\footrulewidth}{0.4pt}
@@ -64,19 +64,19 @@
   
   {\LARGE\bfseries\color{primary} RÉCAPITULATIF DES PROJETS PRATIQUES\par}
   \vspace{0.5cm}
-  {\large Bilans d'Exécution, Objectifs Atteints et Difficultés Rencontrées\par}
+  {\large Bilans de Progression, Objectifs Atteints et Difficultés Rencontrées\par}
   \vspace{0.2cm}
-  {\normalsize UE : Projets d'Intelligence Artificielle (AIA4)\par}
+  {\large\bfseries UE : ANI-IA 4067 INTELLIGENCE ARTIFICIELLE (AIA4)\par}
   \vspace{2.5cm}
   
   \begin{tabular}{rl}
     \textbf{Rédigé par :} & \textbf{NEUSSI NJIETCHEU Patrice Eugene} \\[4pt]
-    \textbf{Matricule :}    & \textbf{21T2894} \\[4pt]
+    \textbf{Matricule :}    & \textbf{24P820} \\[4pt]
     \textbf{Classe :}       & \textbf{AIA4} (Intelligence Artificielle) \\[4pt]
     \textbf{Sous la direction de :} & \textbf{M. Bitha Junior} (Enseignant ENSPY) \\
   \end{tabular}
   \vfill
-  {\small Année Académique 2025--2026\par}
+  {\small Bilan d'avancement au 21 mai 2026\par}
 \end{titlepage}
 
 %---------------------------------------------------------------
@@ -90,21 +90,21 @@
 %---------------------------------------------------------------
 \section{Bilan de Progression et de Réalisation}
 
-Ce rapport récapitulatif présente l'état final d'avancement des trois projets d'Intelligence Artificielle qui nous ont été confiés pour l'UE AIA4. L'ensemble des travaux planifiés a été exécuté avec succès. Ce document dresse le bilan des objectifs scientifiques et applicatifs atteints, détaille les difficultés techniques surmontées au cours du développement et présente le pourcentage de réalisation final pour chaque projet.
+Ce rapport dresse le bilan d'avancement des trois projets d'Intelligence Artificielle qui nous ont été alloués dans le cadre de l'UE ANI-IA 4067 à la date du **21 mai 2026**. Pour chaque projet, nous détaillons les objectifs déjà atteints, les difficultés d'implémentation et algorithmiques actuellement rencontrées, ainsi que le pourcentage de réalisation estimé.
 
 \bigskip
 
 \begin{table}[H]
     \centering
-    \caption{Tableau de synthèse de la réalisation des projets}
+    \caption{Tableau de synthèse de progression des projets au 21 mai}
     \vspace{0.2cm}
     \begin{tabularx}{\linewidth}{lXcc}
         \toprule
-        \textbf{N°} & \textbf{Intitulé du Projet} & \textbf{Statut Actuel} & \textbf{Taux de Réalisation} \\
+        \textbf{N°} & \textbf{Intitulé du Projet} & \textbf{État de Réalisation} & \textbf{Pourcentage} \\
         \midrule
-        1 & Recommandation par GNN (LightGCN) & Terminé et Déployé & 100\% \\
-        2 & Moteur de Recherche Visuelle (CBIR) & Terminé et Déployé & 100\% \\
-        3 & Classification Comportementale (Banque) & Terminé et Déployé & 100\% \\
+        1 & Recommandation par GNN (LightGCN) & En cours d'intégration web & 80\% \\
+        2 & Moteur de Recherche Visuelle (CBIR) & En cours d'optimisation serverless & 85\% \\
+        3 & Classification Comportementale (Banque) & En cours d'assemblage d'ensemble & 75\% \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -114,115 +114,72 @@ Ce rapport récapitulatif présente l'état final d'avancement des trois projets
 %---------------------------------------------------------------
 %  PROJET 1
 %---------------------------------------------------------------
-\section{Bilan du Projet 1 -- Système de Recommandations (LightGCN)}
+\section{Projet 1 -- Système de Recommandations Graph Neural Networks (LightGCN)}
 
 \subsection{Objectifs Atteints}
-Le projet de filtrage collaboratif a atteint 100\% de ses objectifs initiaux :
 \begin{itemize}
-    \item \textbf{Exploration de données :} Nettoyage du corpus MovieLens, extraction de la matrice d'interactions binaire utilisateurs-films et modélisation en graphe bipartite.
-    \item \textbf{Modélisation de Graphes :} Conception sous PyTorch d'une architecture GNN LightGCN à 3 couches de propagation de messages (Recall@10 = 0.0825 et NDCG@10 = 0.1421, surpassant le modèle SVD classique).
-    \item \textbf{Interface Graphique interactive :} Intégration dans un framework web Django avec une vue en graphe Vis.js permettant à l'utilisateur de simuler son profil et de voir en temps réel les arêtes de recommandation s'établir.
-    \item \textbf{Déploiement en Production :} Hébergement sur Vercel avec chargement dynamique via NumPy des plongements latents optimisés.
+    \item \textbf{Préparation du Graphe Bipartite (100\%) :} Nettoyage du corpus d'interaction MovieLens-100k, structuration sous forme de matrice d'adjacence globale et calcul de la normalisation symétrique ($\tilde{A} = D^{-1/2} A D^{-1/2}$).
+    \item \textbf{Modélisation LightGCN (100\%) :} Implémentation du modèle de propagation à 3 couches sous PyTorch et codage de la boucle d'apprentissage par perte de classement pairwise (BPR Loss).
+    \item \textbf{Entraînement et Validation (100\%) :} Validation hors-ligne du modèle démontrant un Recall@10 de 0.0825 et un NDCG@10 de 0.1421.
 \end{itemize}
 
-\subsection{Difficultés Rencontrées et Solutions Apportées}
-\begin{enumerate}
-    \item \textbf{Sparcité des données :} La matrice d'interactions présente un taux de vide de plus de 93\%, rendant l'apprentissage difficile. 
-    \textit{Solution :} L'algorithme LightGCN résout ce problème en agrégeant l'information de voisinage d'ordre supérieur (3 couches), ce qui permet d'enrichir indirectement les embeddings des utilisateurs peu actifs.
-    \item \textbf{Contraintes d'infrastructure Serverless :} Les fonctions serverless de Vercel n'ont pas accès à des GPUs et interdisent les paquets volumineux (comme PyTorch, qui dépasse les limites de taille).
-    \textit{Solution :} Nous avons dissocié l'entraînement (réalisé hors-ligne avec PyTorch) de l'inférence en production. Les plongements finaux sont stockés dans un fichier pickle léger et chargés par NumPy pour calculer les produits matriciels de recommandation en moins de 10ms.
-\end{enumerate}
+\subsection{Difficultés Rencontrées et Actions en Cours}
+\begin{itemize}
+    \item \textbf{Sparsité extrême de la matrice d'interactions :} La rareté des notations (supérieure à 93\%) rend les profils d'utilisateurs "froids" très bruités.
+    \textit{Action :} Le passage de messages d'ordre supérieur de LightGCN permet de lisser les représentations, mais nous étudions l'intégration d'un profil synthétique de départ pour surmonter le problème de cold-start.
+    \item \textbf{Architecture de routage Django-Vis.js :} La modélisation sous forme de réseau dynamique Vis.js dans l'interface web nécessite le transfert efficace des liaisons du graphe.
+    \textit{Action :} Nous terminons l'écriture du script de sérialisation JSON pour envoyer les nœuds et les arêtes d'interaction au template HTML de Django.
+\end{itemize}
 
-\subsection{Taux de Réalisation}
-\textbf{100\%} -- Le système est fonctionnel en ligne et le code source est documenté et poussé.
+\subsection{Pourcentage de Réalisation}
+\textbf{80\%} -- Le cœur de la modélisation mathématique et du modèle IA est validé ; l'intégration web et le déploiement serverless sont en cours de finalisation.
 
 \newpage
 
 %---------------------------------------------------------------
 %  PROJET 2
 %---------------------------------------------------------------
-\section{Bilan du Projet 2 -- Moteur de Recherche Visuel}
+\section{Projet 2 -- Moteur de Recherche Visuel}
 
 \subsection{Objectifs Atteints}
-Le moteur de recherche d'images par le contenu (CBIR) a atteint 100\% de ses objectifs :
 \begin{itemize}
-    \item \textbf{Descripteurs de Texture et Couleur (HSV) :} Codage de l'algorithme d'histogramme joint 3D dans l'espace colorimétrique HSV (128 dimensions) combiné à un descripteur spatial de nuances de gris normalisé par Z-score (256 dimensions).
-    \item \textbf{Descripteurs Sémantiques (MobileNetV2) :} Extraction d'embeddings de haut niveau de 1280 dimensions à l'aide de convolutions séparables en profondeur.
-    \item \textbf{Calcul de Similarité :} Calcul de la similarité cosinus avec un temps de recherche moyen inférieur à 100ms.
-    \item \textbf{Interface Web Django :} Interface utilisateur complète avec formulaire Drag-and-Drop pour l'image requête et affichage sous forme de grille triée des résultats.
+    \item \textbf{Indexation du catalogue (100\%) :} Constitution et redimensionnement d'une base statique de 150 vêtements, et écriture du pipeline d'indexation hors-ligne.
+    \item \textbf{Extraction de Features Sémantiques (100\%) :} Chargement du CNN MobileNetV2 et extraction de descripteurs profonds de dimension 1280.
+    \item \textbf{Descripteurs Spatiaux et Colorimétriques (100\%) :} Code d'extraction d'histogramme joint 3D Hue-Saturation-Value (128 dimensions) et grille de nuances de gris normalisée Z-score (256 dimensions) terminé.
 \end{itemize}
 
-\subsection{Difficultés Rencontrées et Solutions Apportées}
-\begin{enumerate}
-    \item \textbf{Limite de taille des packages Vercel (15MB compressé) :} Le stockage du modèle de Deep Learning MobileNetV2 au format PyTorch sur Vercel échoue systématiquement en raison du manque de mémoire et d'espace disque lors du build.
-    \textit{Solution :} Conception d'une architecture double-moteur adaptative dans `views.py`. L'application tente d'importer PyTorch ; si cela échoue (environnement Vercel), elle bascule automatiquement sur l'extracteur mathématique HSV + Spatial qui ne requiert que NumPy et Pillow et offre des performances colorimétriques de haute qualité pour le e-commerce.
-    \item \textbf{Sensibilité à la luminosité des images :} La recherche d'images brute par distance Euclidienne sur les intensités de pixels était sensible aux variations d'éclairage.
-    \textit{Solution :} L'utilisation de la similarité cosinus (invariante à la norme des vecteurs) et de la normalisation Z-score sur la grille spatiale a permis de stabiliser les performances de recherche face aux fluctuations d'éclairage.
-\end{enumerate}
+\subsection{Difficultés Rencontrées et Actions en Cours}
+\begin{itemize}
+    \item \textbf{Limite de build sur l'architecture sans état (Vercel) :} L'importation de PyTorch et le téléchargement des poids de MobileNetV2 dépassent la taille limite de 15MB compressés allouée par Vercel aux fonctions serverless.
+    \textit{Action :} Nous concevons un algorithme de repli (fallback) hybride. Si PyTorch ne peut pas être chargé sur le serveur, l'application basculera automatiquement sur l'extraction locale HSV + Spatial, ce qui permet de bypasser l'installation de PyTorch et de conserver un temps de recherche minimal sous les 100ms.
+\end{itemize}
 
-\subsection{Taux de Réalisation}
-\textbf{100\%} -- L'application est en ligne avec une base d'images statique complète indexée.
+\subsection{Pourcentage de Réalisation}
+\textbf{85\%} -- Les deux moteurs de recherche (sémantique et colorimétrique) sont fonctionnels en local. Le script de repli dynamique est en cours d'intégration dans l'interface de recherche Django.
 
 \newpage
 
 %---------------------------------------------------------------
 %  PROJET 3
 %---------------------------------------------------------------
-\section{Bilan du Projet 3 -- Prédiction du Comportement Client (Banque)}
+\section{Projet 3 -- Prédiction du Comportement Client (Banque)}
 
 \subsection{Objectifs Atteints}
-Le modèle de scoring prédictif bancaire est finalisé et déployé à 100\% :
 \begin{itemize}
-    \item \textbf{Feature Engineering :} Création d'un pipeline automatique `ColumnTransformer` gérant les variables qualitatives par One-Hot Encoding et les variables quantitatives par standardisation robuste.
-    \item \textbf{Modélisation Hybride :} Entraînement de trois modèles complémentaires (Régression Logistique, Forêt Aléatoire, et un réseau MLP profond codé sous PyTorch).
-    \item \textbf{Ensemble Soft Voting :} Fusion par vote pondéré des probabilités individuelles pour maximiser l'AUC-ROC globale.
-    \item \textbf{Interface Web Django double-mode :} Panel de saisie interactif pour la simulation en ligne d'un client unique, et module de téléchargement de fichier CSV pour la prédiction en masse (batch).
+    \item \textbf{Analyse Exploratoire \& Prétraitement (100\%) :} EDA complète du dataset UCI Bank Marketing, encodage One-Hot des données catégorielles et standardisation robuste des variables financières.
+    \item \textbf{Modélisation Individuelle (100\%) :} Entraînement de la Régression Logistique et de la Forêt Aléatoire avec ajustement des poids de classe.
+    \item \textbf{Réseau de Neurones MLP (100\%) :} Codage et entraînement sous PyTorch du perceptron multicouche à 3 couches linéaires avec Dropout.
 \end{itemize}
 
-\subsection{Difficultés Rencontrées et Solutions Apportées}
-\begin{enumerate}
-    \item \textbf{Déséquilibre des classes (11.7\% de positifs) :} L'entraînement naïf du modèle conduisait à une précision médiocre sur la classe minoritaire.
-    \textit{Solution :} Utilisation du paramètre de poids de classe inversement proportionnel (`class\_weight='balanced'`) et intégration du vote d'ensemble (Soft Voting) pour lisser les prédictions et optimiser le compromis Précision/Rappel.
-    \item \textbf{Intégration d'un réseau PyTorch dans Django sans dépendance GPU :}
-    \textit{Solution :} Nous avons écrit une classe enveloppe `PyTorchMLPClassifier` héritant de `BaseEstimator` de scikit-learn. Le script extrait et enregistre l'ensemble des poids entraînés et les transformations dans un fichier pickle consolidé, ce qui évite de charger PyTorch en mémoire en production.
-\end{enumerate}
-
-\subsection{Taux de Réalisation}
-\textbf{100\%} -- L'ensemble du pipeline est opérationnel avec un rapport d'analyse statistique complet.
-
-\newpage
-
-%---------------------------------------------------------------
-%  SYNTHÈSE DES LIENS DE LIVRAISON
-%---------------------------------------------------------------
-\section{Synthèse et Liens Utiles}
-
-Toutes les ressources de code et de déploiement en production sont accessibles via les liens officiels suivants :
-
-\bigskip
-
+\subsection{Difficultés Rencontrées et Actions en Cours}
 \begin{itemize}
-    \item \textbf{Projet 1 : Système de Recommandation}
-    \begin{itemize}
-        \item Code source (GitHub) : \url{https://github.com/neussi/movie_recommender}
-        \item Application en production (Vercel) : \url{https://movie-recommender-indol-nine.vercel.app}
-    \end{itemize}
-    
-    \bigskip
-    
-    \item \textbf{Projet 2 : Moteur de Recherche Visuel}
-    \begin{itemize}
-        \item Code source (GitHub) : \url{https://github.com/neussi/visual_search_engine}
-        \item Application en production (Vercel) : \url{https://visual-search-engine-seven.vercel.app}
-    \end{itemize}
-    
-    \bigskip
-    
-    \item \textbf{Projet 3 : Prédiction Comportementale Bancaire}
-    \begin{itemize}
-        \item Code source (GitHub) : \url{https://github.com/neussi/bank_behavior_prediction}
-        \item Application en production (Vercel) : \url{https://bank-behavior-prediction.vercel.app}
-    \end{itemize}
+    \item \textbf{Déséquilibre prononcé des cibles (11.7\% d'adhésion) :} Les modèles tendent à maximiser l'accuracy au détriment du rappel de la classe d'intérêt.
+    \textit{Action :} Nous mettons au point une architecture d'ensemble par vote pondéré (Soft Voting) regroupant la régression logistique, la forêt aléatoire et le MLP pour lisser les scores de probabilité et cibler le compromis optimal.
+    \item \textbf{Encapsulation PyTorch dans scikit-learn :} Le framework d'ensemble de scikit-learn nécessite que le modèle PyTorch implémente les APIs `fit` et `predict\_proba`.
+    \textit{Action :} Nous développons une classe enveloppe personnalisée `PyTorchMLPClassifier` qui hérite des classes de base de scikit-learn pour s'insérer proprement dans le `VotingClassifier`.
 \end{itemize}
+
+\subsection{Pourcentage de Réalisation}
+\textbf{75\%} -- L'analyse statistique et l'entraînement des modèles de base sont faits. Nous finalisons l'intégration de la classe enveloppe d'ensemble et l'interface de prédiction en lot (batch) Django.
 
 \end{document}
