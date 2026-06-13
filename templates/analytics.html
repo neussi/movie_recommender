@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Technologie GCN & Analyses - MovieGCN Rec{% endblock %}
+
+{% block extra_head %}
+<!-- Include MathJax for LaTeX mathematical formula rendering -->
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es6/tex-mml-chtml.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="mb-12 space-y-2">
+        <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Modélisation & Propagation</span>
+        <h2 class="text-3xl font-extrabold text-slate-900">Analyses Statistiques et Mathématiques du GCN</h2>
+        <p class="text-slate-500 text-sm">Description de la propagation par convolution de graphes et analyses des courbes d'apprentissage.</p>
+    </div>
+
+    <!-- Math Foundations -->
+    <div class="bg-white premium-card p-8 mb-12 space-y-8">
+        <h3 class="text-base font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100">1. Formulation Mathématique LightGCN</h3>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-3">
+                <h4 class="text-sm font-bold text-slate-800">1. Règle de Propagation Bipartite</h4>
+                <p class="text-slate-500 text-xs leading-relaxed">
+                    LightGCN simplifie la convolution de graphe en propageant uniquement les embeddings à travers les voisins. À l'étape \(k+1\), l'embedding d'un nœud utilisateur \(u\) est mis à jour en agrégeant ceux de ses films notés \(i\) :
+                </p>
+                <div class="bg-slate-50 p-4 rounded-xl text-center text-sm font-medium font-mono">
+                    $$e_u^{(k+1)} = \sum_{i \in \mathcal{N}(u)} \frac{1}{\sqrt{|\mathcal{N}(u)|}\sqrt{|\mathcal{N}(i)|}} e_i^{(k)}$$
+                </div>
+                <p class="text-slate-500 text-xs leading-relaxed">
+                    De la même manière, l'embedding d'un film \(i\) est agrégé à partir de ses spectateurs :
+                </p>
+                <div class="bg-slate-50 p-4 rounded-xl text-center text-sm font-medium font-mono">
+                    $$e_i^{(k+1)} = \sum_{u \in \mathcal{N}(i)} \frac{1}{\sqrt{|\mathcal{N}(i)|}\sqrt{|\mathcal{N}(u)|}} e_u^{(k)}$$
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h4 class="text-sm font-bold text-slate-800">2. Représentation Finale et Perte BPR</h4>
+                <p class="text-slate-500 text-xs leading-relaxed">
+                    Après \(K\) couches de propagation, l'embedding final est obtenu en calculant la moyenne pondérée de tous les niveaux :
+                </p>
+                <div class="bg-slate-50 p-4 rounded-xl text-center text-sm font-medium font-mono">
+                    $$e_u = \sum_{k=0}^{K} \alpha_k e_u^{(k)}$$
+                </div>
+                <p class="text-slate-500 text-xs leading-relaxed">
+                    Le système utilise une fonction de perte de classement Bayésienne Personnalisée (BPR Loss) pour forcer le dot product des items aimés à dépasser celui des items non visités :
+                </p>
+                <div class="bg-slate-50 p-4 rounded-xl text-center text-sm font-medium font-mono">
+                    $$\mathcal{L}_{BPR} = -\sum_{u=1}^M \sum_{i \in \mathcal{N}(u)} \sum_{j \notin \mathcal{N}(u)} \ln \sigma(\hat{y}_{ui} - \hat{y}_{uj}) + \lambda ||E^{(0)}||^2_2$$
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diagnostic Visualizations -->
+    <div class="bg-white premium-card p-8 mb-12">
+        <h3 class="text-base font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 mb-8">2. Visualisation des Courbes de Perte</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Fig 1 -->
+            <div class="border border-slate-100 rounded-2xl p-4 flex flex-col hover:shadow-md transition">
+                <img src="/static/images/movie_4_learning_curve.png" alt="LightGCN Learning Curve" class="w-full h-auto rounded-lg border border-slate-100 object-contain flex-grow" />
+                <h5 class="text-xs font-bold text-slate-850 mt-4">Évolution de la Perte GCN (BPR Loss)</h5>
+                <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Représente la diminution graduelle de l'erreur BPR au fil des époques de propagation.</p>
+            </div>
+            <!-- Fig 2 -->
+            <div class="border border-slate-100 rounded-2xl p-4 flex flex-col hover:shadow-md transition">
+                <img src="/static/images/movie_5_metrics_epoch.png" alt="Movie Lens interaction distribution" class="w-full h-auto rounded-lg border border-slate-100 object-contain flex-grow" />
+                <h5 class="text-xs font-bold text-slate-850 mt-4">Distribution des Interactions MovieLens</h5>
+                <p class="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Histogramme statistique des fréquences de visionnage par film pour illustrer la densité de la matrice collaborative.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quantitative Evaluation Table -->
+    <div class="bg-white premium-card p-8">
+        <h3 class="text-base font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 mb-6">3. Métriques Quantitatives Collaborative Filtering</h3>
+        <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+                        <th class="p-4">Modèle Collaboratif</th>
+                        <th class="p-4">Recall@10</th>
+                        <th class="p-4">NDCG@10</th>
+                        <th class="p-4">Precision@10</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+                    <tr class="hover:bg-slate-50/40 transition">
+                        <td class="p-4 font-bold text-slate-800">Factorisation de Matrice (SVD Baseline)</td>
+                        <td class="p-4">0.125</td>
+                        <td class="p-4">0.187</td>
+                        <td class="p-4">0.084</td>
+                    </tr>
+                    <tr class="bg-rose-50/10 font-bold hover:bg-rose-50/20 transition text-rose-700">
+                        <td class="p-4 text-rose-900">LightGCN (3 couches)</td>
+                        <td class="p-4">0.169</td>
+                        <td class="p-4">0.245</td>
+                        <td class="p-4">0.113</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

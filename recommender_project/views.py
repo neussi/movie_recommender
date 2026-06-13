@@ -17,12 +17,21 @@ def load_assets():
             recommender_assets = pickle.load(f)
     return recommender_assets
 
-def index(request):
+def home(request):
+    return render(request, 'home.html')
+
+def recommender_view(request):
     assets = load_assets()
     users_list = []
     if assets:
-        users_list = list(assets['user_to_idx'].keys())[:200] # get first 200 users
-    return render(request, 'index.html', {'users_list': users_list})
+        users_list = list(assets['user_to_idx'].keys())[:200]
+    return render(request, 'recommender.html', {'users_list': users_list})
+
+def analytics_view(request):
+    return render(request, 'analytics.html')
+
+def contact_view(request):
+    return render(request, 'contact.html')
 
 def user_history(request):
     user_id = request.GET.get('user_id')

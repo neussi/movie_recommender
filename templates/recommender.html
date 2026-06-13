@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulateur de Recommandations - MovieGCN Rec{% endblock %}
+
+{% block extra_head %}
+<!-- Vis.js standalone package for drawing the bipartite graph -->
+<script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<style>
+    #network-viz {
+        height: 500px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-6 py-12">
+    <div class="mb-10 space-y-2">
+        <span class="text-xs font-bold text-rose-600 uppercase tracking-wider">Simulateur Collaboratif</span>
+        <h2 class="text-3xl font-extrabold text-slate-900">Recommandateur GNN</h2>
+        <p class="text-slate-500 text-sm">Sélectionnez un identifiant utilisateur pour charger ses goûts historiques et générer ses recommandations personnalisées de films.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left: Options & History -->
+        <div class="lg:col-span-4 flex flex-col gap-8">
+            <div class="bg-white premium-card p-6">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Profil Cible</h4>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-500 mb-1.5 font-bold">Choisir un ID Utilisateur :</label>
+                        <select id="user-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-rose-500 focus:bg-white text-sm text-slate-800 font-bold transition">
+                            <option value="" disabled selected>-- Sélectionner --</option>
+                            {% for uid in users_list %}
+                            <option value="{{ uid }}">Utilisateur {{ uid }}</option>
+                            {% empty %}
+                            <option value="1">Utilisateur 1</option>
+                            <option value="2">Utilisateur 2</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button id="get-recommendations-btn" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-rose-500/10 active:scale-[0.98]">
+                        Recommander les Films
+                    </button>
+                </div>
+            </div>
+
+            <!-- Rated movies preview -->
+            <div id="history-card" class="bg-white premium-card p-6 hidden">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Films Très Appréciés (Historique)</h4>
+                <div class="overflow-y-auto max-h-[350px]">
+                    <ul id="history-list" class="divide-y divide-slate-100 text-xs text-slate-600 space-y-2">
+                        <!-- Dynamic -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Viz & Suggestions -->
+        <div class="lg:col-span-8 flex flex-col gap-8">
+            <!-- Visualization -->
+            <div class="bg-white premium-card p-6 flex flex-col">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Graphe Bipartite d'Interactions</h4>
+                <div id="network-viz"></div>
+                <div class="flex flex-wrap gap-4 justify-center text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-4">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>Utilisateur Cible</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>Historique d'Achat (Notes >= 4)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>Recommandations IA</span>
+                </div>
+            </div>
+
+            <!-- Recommendation Table -->
+            <div id="recommendations-card" class="bg-white premium-card p-6 hidden">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Top 10 Recommandations</h4>
+                <div class="overflow-x-auto border border-slate-100 rounded-xl">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 border-b border-slate-100 font-bold">
+                                <th class="p-4">Film</th>
+                                <th class="p-4">Genre</th>
+                                <th class="p-4">Score d'Intérêt</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rec-tbody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                            <!-- Dynamic -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let network = null;
+
+    document.getElementById('get-recommendations-btn').addEventListener('click', function() {
+        const userId = document.getElementById('user-select').value;
+        if (!userId) {
+            alert("Veuillez d'abord sélectionner un utilisateur.");
+            return;
+        }
+
+        // Fetch User History
+        fetch(`/user-history/?user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            const hList = document.getElementById('history-list');
+            hList.innerHTML = '';
+            data.history.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'py-2 flex justify-between items-start gap-4';
+                li.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-800">${item.title}</span>
+                        <span class="block text-[10px] text-slate-400 capitalize mt-0.5">${item.genres}</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-extrabold text-[10px]">★ ${item.rating}</span>
+                `;
+                hList.appendChild(li);
+            });
+            document.getElementById('history-card').classList.remove('hidden');
+        });
+
+        // Fetch Recommendations & Graph
+        fetch(`/recommend/?user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            // Populate recommendations table
+            const tbody = document.getElementById('rec-tbody');
+            tbody.innerHTML = '';
+            data.recommendations.forEach(rec => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/40 transition';
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">${rec.title}</td>
+                    <td class="p-4 capitalize text-slate-500">${rec.genres}</td>
+                    <td class="p-4 font-extrabold text-rose-600">${rec.score.toFixed(3)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('recommendations-card').classList.remove('hidden');
+
+            // Draw Vis.js network
+            const container = document.getElementById('network-viz');
+            const graphData = {
+                nodes: new vis.DataSet(data.graph.nodes),
+                edges: new vis.DataSet(data.graph.edges)
+            };
+            const options = {
+                nodes: {
+                    borderWidth: 2,
+                    font: { size: 11, face: 'Outfit', color: '#1e293b' }
+                },
+                edges: {
+                    color: { color: '#cbd5e1', highlight: '#f43f5e' },
+                    width: 1.5,
+                    smooth: { type: 'continuous' }
+                },
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: {
+                        gravitationalConstant: -26,
+                        centralGravity: 0.005,
+                        springLength: 100,
+                        springConstant: 0.18
+                    }
+                }
+            };
+            network = new vis.Network(container, graphData, options);
+        })
+        .catch(err => alert("Erreur de récupération des données."));
+    });
+</script>
+{% endblock %}
