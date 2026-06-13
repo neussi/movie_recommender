@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCN Movie Recommender - Recommendation avec Graphes Convolutifs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .grad-text {
+            background: linear-gradient(to right, #ec4899, #f43f5e, #fb7185);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        #network-viz {
+            height: 400px;
+            background: rgba(3, 7, 18, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="text-slate-100 flex flex-col min-vh-screen">
+    <!-- Header -->
+    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-pink-600 flex items-center justify-center font-bold text-white shadow-lg shadow-pink-500/30">MV</div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight">MovieGCN<span class="text-pink-500">Rec</span></h1>
+                    <p class="text-xs text-slate-400">Système de recommandation GCN (LightGCN)</p>
+                </div>
+            </div>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 font-medium">Bipartite User-Item Graph</span>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left Column: User Selection and History (Column span 4) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            <div class="glass-card p-6 rounded-3xl shadow-xl">
+                <h2 class="text-lg font-semibold grad-text mb-4">Sélection de l'Utilisateur</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-300 mb-1.5 font-medium">Choisir un ID utilisateur :</label>
+                        <select id="user-select" class="w-full bg-slate-950/60 border border-slate-700/60 rounded-xl px-4 py-2.5 focus:outline-none focus:border-pink-500 transition text-slate-100">
+                            <option value="" disabled selected>-- Choisir un utilisateur --</option>
+                            {% for uid in users_list %}
+                            <option value="{{ uid }}">Utilisateur {{ uid }}</option>
+                            {% empty %}
+                            <option value="1">Utilisateur 1</option>
+                            <option value="2">Utilisateur 2</option>
+                            <option value="3">Utilisateur 3</option>
+                            <option value="4">Utilisateur 4</option>
+                            <option value="5">Utilisateur 5</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button id="get-recommendations-btn" class="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-pink-500/20 active:scale-[0.98]">
+                        Générer des recommandations
+                    </button>
+                </div>
+            </div>
+
+            <!-- User History -->
+            <div class="glass-card p-6 rounded-3xl shadow-xl flex-grow">
+                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4">Historique des Favoris (Note &ge; 4.0)</h2>
+                <div id="history-loading" class="hidden text-xs text-slate-500 italic py-4">Chargement de l'historique...</div>
+                <div id="history-empty" class="text-xs text-slate-500 italic py-4">Sélectionnez un utilisateur pour voir ses favoris.</div>
+                <ul id="history-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                    <!-- History items will be inserted here -->
+                </ul>
+            </div>
+        </section>
+
+        <!-- Right Column: Recommendations & Graph Visual (Column span 8) -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- Recommendations List Grid -->
+            <div class="glass-card p-6 rounded-3xl shadow-xl">
+                <h2 class="text-lg font-semibold grad-text mb-4">Top 10 des Films Recommandés (LightGCN)</h2>
+                <div id="rec-loading" class="hidden text-xs text-slate-500 italic py-8 text-center">Calcul des similarités de graphe en cours...</div>
+                <div id="rec-empty" class="text-slate-500 text-sm italic py-8 text-center">Aucun film recommandé. Cliquez sur "Générer" ci-contre.</div>
+                <div id="rec-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                    <!-- Cards will be populated here -->
+                </div>
+            </div>
+
+            <!-- Graph Visualization Box -->
+            <div class="glass-card p-6 rounded-3xl shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Visualisation Interactive des Propagations du Graphe</h2>
+                    <span class="text-[10px] bg-slate-800 text-pink-400 px-2 py-0.5 rounded font-mono">vis.js Network</span>
+                </div>
+                <div id="network-viz" class="rounded-2xl relative overflow-hidden">
+                    <div id="network-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs italic">
+                        Le graphe interactif de l'utilisateur apparaîtra ici après génération.
+                    </div>
+                </div>
+                <div class="flex gap-4 mt-3 text-[10px] text-slate-400 justify-center">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>Utilisateur</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>Historique (A aimé)</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block"></span>Recommandé par GCN</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-6 mt-12 text-center text-xs text-slate-500">
+        <p>© 2026 ENSPY - Projet IA4 - Moteur de Recommandation GCN</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        let network = null;
+
+        document.getElementById('get-recommendations-btn').addEventListener('click', function() {
+            const userId = document.getElementById('user-select').value;
+            if(!userId) {
+                alert("Veuillez sélectionner un utilisateur dans la liste.");
+                return;
+            }
+
+            // 1. Fetch History
+            document.getElementById('history-loading').classList.remove('hidden');
+            document.getElementById('history-empty').classList.add('hidden');
+            document.getElementById('history-list').innerHTML = '';
+            
+            fetch(`/user-history/?user_id=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('history-loading').classList.add('hidden');
+                if(data.error) {
+                    alert(data.error);
+                    return;
+                }
+                
+                const list = document.getElementById('history-list');
+                data.history.forEach(movie => {
+                    const li = document.createElement('li');
+                    li.className = 'p-3 bg-slate-900/60 border border-slate-800/50 rounded-xl flex flex-col gap-0.5';
+                    li.innerHTML = `
+                        <span class="text-xs font-semibold text-white">${movie.title}</span>
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>${movie.genres}</span>
+                            <span class="text-amber-400 font-bold">★ ${movie.rating.toFixed(1)}</span>
+                        </div>
+                    `;
+                    list.appendChild(li);
+                });
+            });
+
+            // 2. Fetch Recommendations and Graph
+            document.getElementById('rec-loading').classList.remove('hidden');
+            document.getElementById('rec-empty').classList.add('hidden');
+            document.getElementById('rec-grid').classList.add('hidden');
+            document.getElementById('rec-grid').innerHTML = '';
+            document.getElementById('network-placeholder').classList.remove('hidden');
+
+            fetch(`/recommend/?user_id=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('rec-loading').classList.add('hidden');
+                if(data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Render grid
+                const grid = document.getElementById('rec-grid');
+                grid.classList.remove('hidden');
+                
+                data.recommendations.forEach(rec => {
+                    const card = document.createElement('div');
+                    card.className = 'p-4 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800/60 rounded-2xl flex flex-col justify-between hover:border-pink-500/30 transition';
+                    card.innerHTML = `
+                        <div>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">${rec.genres.split('|')[0]}</span>
+                            <h3 class="text-sm font-semibold text-white mt-2 mb-1">${rec.title}</h3>
+                            <p class="text-[10px] text-slate-400">${rec.genres}</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/50">
+                            <span class="text-[10px] text-slate-500">ID Film: ${rec.movie_id}</span>
+                            <span class="text-xs text-pink-400 font-bold bg-pink-500/5 px-2 py-1 rounded">Score: ${rec.score.toFixed(2)}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                // Render vis.js graph
+                document.getElementById('network-placeholder').classList.add('hidden');
+                const container = document.getElementById('network-viz');
+                
+                const graphData = {
+                    nodes: new vis.DataSet(data.graph.nodes),
+                    edges: new vis.DataSet(data.graph.edges)
+                };
+                
+                const options = {
+                    nodes: {
+                        font: { color: '#ffffff', size: 11, face: 'Outfit' },
+                        borderWidth: 2
+                    },
+                    edges: {
+                        color: { color: 'rgba(255,255,255,0.15)', highlight: '#ec4899' },
+                        font: { color: '#94a3b8', size: 9, align: 'horizontal' },
+                        arrows: { to: { enabled: true, scaleFactor: 0.5 } }
+                    },
+                    physics: {
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            centralGravity: 0.3,
+                            springLength: 95
+                        }
+                    }
+                };
+                
+                network = new vis.Network(container, graphData, options);
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("Erreur lors de la génération des recommandations.");
+            });
+        });
+    </script>
+</body>
+</html>
