@@ -1,10 +1,10 @@
-# 🎬 MovieGCNRec - Système de Recommandation Graph-Based (LightGCN)
+# MovieGCNRec - Système de Recommandation Graph-Based (LightGCN)
 
 **MovieGCNRec** est une application Django de recommandation de films basée sur les réseaux de neurones convolutionnels de graphes (**GCN**). En utilisant l'architecture **LightGCN** sur le jeu de données MovieLens, l'application capture les interactions d'ordre supérieur entre utilisateurs et films dans un graphe bipartite, offrant des recommandations personnalisées hautement pertinentes et visualisables sous forme de graphe interactif de propagation de similarités.
 
 ---
 
-## 🚀 Fonctionnalités Clés
+## Fonctionnalités Clés
 
 1. **Sélection Utilisateur Dynamique** : Analyse du profil historique d'un utilisateur sélectionné parmi le catalogue (notes attribuées $\geq 4.0$).
 2. **Recommandations LightGCN (Top 10)** : Prédiction des scores de préférence par produit scalaire des embeddings utilisateurs-films affinés par propagation de graphe.
@@ -14,7 +14,7 @@
 
 ---
 
-## 🛠️ Stack Technique
+## Stack Technique
 
 - **Framework Web** : Django 6.0+
 - **Algorithmes Graph** : PyTorch (LightGCN avec fonction de perte BPR), Scipy Sparse
@@ -25,7 +25,7 @@
 
 ---
 
-## 📦 Installation et Lancement Local
+## Installation et Lancement Local
 
 ### Prerequisites
 - Python 3.10+
@@ -65,7 +65,7 @@ Accédez à l'application sur [http://localhost:8002/](http://localhost:8002/).
 
 ---
 
-## 📂 Structure du Projet
+## Structure du Projet
 
 ```
 ├── recommender_project/     # Configuration et Vues Django (API REST de calcul de scores)
