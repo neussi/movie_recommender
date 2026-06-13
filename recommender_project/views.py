@@ -121,3 +121,33 @@ def recommend(request):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+from django.core.mail import send_mail
+from django.conf import settings
+
+@csrf_exempt
+def contact(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '')
+        email = request.POST.get('email', '')
+        subject = request.POST.get('subject', '')
+        message = request.POST.get('message', '')
+        
+        if not name or not email or not message:
+            return JsonResponse({'error': 'Veuillez remplir tous les champs obligatoires.'}, status=400)
+            
+        full_message = f"Message de {name} ({email}) :\n\n{message}"
+        try:
+            send_mail(
+                subject=f"[Contact Plateforme] {subject or 'Nouveau Message'}",
+                message=full_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=['npe.techs@gmail.com'],
+                fail_silently=False,
+            )
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+            
+    return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
+

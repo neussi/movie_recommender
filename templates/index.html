@@ -3,124 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCN Movie Recommender - Recommendation avec Graphes Convolutifs</title>
+    <title>MovieGCN Rec - Recommandation par Réseaux de Neurones de Graphes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background: linear-gradient(135deg, #090d16 0%, #111827 100%);
-            min-height: 100vh;
+            background-color: #ffffff;
+            color: #0f172a;
         }
-        .glass-card {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .card-shadow {
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 8px -1px rgba(15, 23, 42, 0.04);
+            border: 1px solid #f1f5f9;
         }
-        .grad-text {
-            background: linear-gradient(to right, #ec4899, #f43f5e, #fb7185);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .header-shadow {
+            border-bottom: 1px solid #e2e8f0;
         }
         #network-viz {
             height: 400px;
-            background: rgba(3, 7, 18, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
         }
     </style>
 </head>
-<body class="text-slate-100 flex flex-col min-vh-screen">
+<body class="min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="border-b border-slate-800/80 bg-slate-950/60 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+    <header class="header-shadow bg-white/95 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between py-4">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-pink-600 flex items-center justify-center font-bold text-white shadow-lg shadow-pink-500/30">MV</div>
+                <!-- Logo -->
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z"/></svg>
+                </div>
                 <div>
-                    <h1 class="text-lg font-bold tracking-tight">MovieGCN<span class="text-pink-500">Rec</span></h1>
-                    <p class="text-xs text-slate-400">Système de recommandation GCN (LightGCN)</p>
+                    <h1 class="text-lg font-extrabold tracking-tight text-slate-900">MovieGCN<span class="text-emerald-600">Rec</span></h1>
+                    <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Graph Convolutional Recommender</p>
                 </div>
             </div>
-            <span class="text-xs px-2.5 py-1 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20 font-medium">Bipartite User-Item Graph</span>
+            <nav class="flex gap-8 text-sm font-semibold text-slate-600">
+                <a href="#recommender-section" class="hover:text-emerald-600 transition">Recommandateur</a>
+                <a href="#tech-section" class="hover:text-emerald-600 transition">Technologie GCN</a>
+                <a href="#contact-section" class="hover:text-emerald-600 transition">Contact & Support</a>
+            </nav>
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- Left Column: User Selection and History (Column span 4) -->
-        <section class="lg:col-span-4 flex flex-col gap-6">
-            <div class="glass-card p-6 rounded-3xl shadow-xl">
-                <h2 class="text-lg font-semibold grad-text mb-4">Sélection de l'Utilisateur</h2>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs text-slate-300 mb-1.5 font-medium">Choisir un ID utilisateur :</label>
-                        <select id="user-select" class="w-full bg-slate-950/60 border border-slate-700/60 rounded-xl px-4 py-2.5 focus:outline-none focus:border-pink-500 transition text-slate-100">
-                            <option value="" disabled selected>-- Choisir un utilisateur --</option>
-                            {% for uid in users_list %}
-                            <option value="{{ uid }}">Utilisateur {{ uid }}</option>
-                            {% empty %}
-                            <option value="1">Utilisateur 1</option>
-                            <option value="2">Utilisateur 2</option>
-                            <option value="3">Utilisateur 3</option>
-                            <option value="4">Utilisateur 4</option>
-                            <option value="5">Utilisateur 5</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <button id="get-recommendations-btn" class="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg shadow-pink-500/20 active:scale-[0.98]">
-                        Générer des recommandations
-                    </button>
+    <!-- Hero banner -->
+    <div class="bg-gradient-to-br from-emerald-50/60 to-teal-50/40 border-b border-emerald-100/40 py-12 px-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="max-w-2xl">
+                <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold uppercase tracking-wider">Algorithme LightGCN + PyTorch</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mt-3 mb-4 leading-tight">Recommandation de films basée sur la propagation dans les graphes</h2>
+                <p class="text-slate-600 text-sm leading-relaxed">
+                    Découvrez des suggestions personnalisées ultra-pertinentes. En modélisant les interactions utilisateurs-films sous forme de graphes bipartites, notre IA capture les relations collaboratives profondes de manière optimale.
+                </p>
+            </div>
+            <div class="w-full md:w-auto flex flex-col gap-3 min-w-[280px]">
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span class="text-xs font-medium text-slate-700">Modèle Actif : <strong>LightGCN (3 couches)</strong></span>
+                </div>
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span class="text-xs font-medium text-slate-700">Matrice d'interactions : <strong>MovieLens-100k</strong></span>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- User History -->
-            <div class="glass-card p-6 rounded-3xl shadow-xl flex-grow">
-                <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4">Historique des Favoris (Note &ge; 4.0)</h2>
-                <div id="history-loading" class="hidden text-xs text-slate-500 italic py-4">Chargement de l'historique...</div>
-                <div id="history-empty" class="text-xs text-slate-500 italic py-4">Sélectionnez un utilisateur pour voir ses favoris.</div>
-                <ul id="history-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
-                    <!-- History items will be inserted here -->
-                </ul>
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-12">
+        
+        <!-- Recommandateur Section -->
+        <section id="recommender-section" class="scroll-mt-24 mb-16">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left Column: User Selector & History -->
+                <div class="lg:col-span-4 flex flex-col gap-6">
+                    <div class="bg-white card-shadow p-6 rounded-3xl">
+                        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">Sélection de l'utilisateur</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-slate-600 mb-1.5 font-semibold">Choisir un identifiant :</label>
+                                <select id="user-select" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 focus:bg-white transition text-slate-900 font-medium text-sm">
+                                    <option value="" disabled selected>-- Choisir un utilisateur --</option>
+                                    {% for uid in users_list %}
+                                    <option value="{{ uid }}">Utilisateur {{ uid }}</option>
+                                    {% empty %}
+                                    <option value="1">Utilisateur 1</option>
+                                    <option value="2">Utilisateur 2</option>
+                                    <option value="3">Utilisateur 3</option>
+                                    <option value="4">Utilisateur 4</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button id="get-recommendations-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-xl transition shadow-lg shadow-emerald-500/10 active:scale-[0.98]">
+                                Générer les recommandations
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white card-shadow p-6 rounded-3xl flex-grow">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-4 pb-2 border-b border-slate-100">Historique des Favoris (Note &ge; 4)</h4>
+                        <div id="history-loading" class="hidden text-xs text-slate-400 italic py-4">Recherche de l'historique...</div>
+                        <div id="history-empty" class="text-xs text-slate-400 italic py-4">Sélectionnez un profil ci-dessus.</div>
+                        <ul id="history-list" class="space-y-3 max-h-80 overflow-y-auto pr-2">
+                            <!-- History items -->
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Results & Graph Viz -->
+                <div class="lg:col-span-8 flex flex-col gap-6">
+                    <div class="bg-white card-shadow p-6 rounded-3xl">
+                        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100">Suggestions du Modèle (LightGCN)</h4>
+                        <div id="rec-loading" class="hidden text-xs text-slate-400 italic py-8 text-center">Propagation de l'embedding utilisateur sur le graphe de films...</div>
+                        <div id="rec-empty" class="text-slate-400 text-xs italic py-8 text-center">Aucun résultat affiché.</div>
+                        <div id="rec-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+                            <!-- Rec cards -->
+                        </div>
+                    </div>
+
+                    <div class="bg-white card-shadow p-6 rounded-3xl">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Graphe d'Interactions & Recommandations</h4>
+                            <span class="text-[9px] bg-slate-100 text-emerald-700 px-2 py-0.5 rounded font-mono font-bold uppercase">vis.js Network</span>
+                        </div>
+                        <div id="network-viz" class="rounded-2xl relative overflow-hidden">
+                            <div id="network-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-400 text-xs italic">
+                                Le réseau de connexions collaboratives sera matérialisé ici.
+                            </div>
+                        </div>
+                        <div class="flex gap-6 mt-4 text-[10px] font-bold text-slate-500 justify-center">
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500 inline-block"></span>Utilisateur</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>Favoris</span>
+                            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-pink-500 inline-block"></span>Recommandations</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- Right Column: Recommendations & Graph Visual (Column span 8) -->
-        <section class="lg:col-span-8 flex flex-col gap-6">
-            
-            <!-- Recommendations List Grid -->
-            <div class="glass-card p-6 rounded-3xl shadow-xl">
-                <h2 class="text-lg font-semibold grad-text mb-4">Top 10 des Films Recommandés (LightGCN)</h2>
-                <div id="rec-loading" class="hidden text-xs text-slate-500 italic py-8 text-center">Calcul des similarités de graphe en cours...</div>
-                <div id="rec-empty" class="text-slate-500 text-sm italic py-8 text-center">Aucun film recommandé. Cliquez sur "Générer" ci-contre.</div>
-                <div id="rec-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
-                    <!-- Cards will be populated here -->
-                </div>
+        <!-- Technologie Section -->
+        <section id="tech-section" class="scroll-mt-24 mb-16 border-t border-slate-100 pt-16">
+            <div class="max-w-3xl mb-8">
+                <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wider">Visualisation Mathématique</span>
+                <h3 class="text-2xl font-bold text-slate-900 mt-3">Métriques issues du Modèle</h3>
+                <p class="text-slate-600 text-sm leading-relaxed mt-2">
+                    L'entraînement de LightGCN est basé sur la décomposition spectrale et l'optimisation BPR (Bayesian Personalized Ranking) avec échantillonnage de paires négatives.
+                </p>
             </div>
 
-            <!-- Graph Visualization Box -->
-            <div class="glass-card p-6 rounded-3xl shadow-xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400">Visualisation Interactive des Propagations du Graphe</h2>
-                    <span class="text-[10px] bg-slate-800 text-pink-400 px-2 py-0.5 rounded font-mono">vis.js Network</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white card-shadow rounded-2xl p-4">
+                    <img src="/static/images/recommender_1_distribution.png" alt="Distribution des notes" class="w-full h-auto rounded-lg border border-slate-100 object-cover" />
+                    <h5 class="text-xs font-bold text-slate-800 mt-3">Répartition des Notes du Dataset</h5>
+                    <p class="text-[11px] text-slate-500 mt-1">Histogramme des scores attribués aux films dans MovieLens. Une forte densité autour de 4.0 valide nos filtres.</p>
                 </div>
-                <div id="network-viz" class="rounded-2xl relative overflow-hidden">
-                    <div id="network-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs italic">
-                        Le graphe interactif de l'utilisateur apparaîtra ici après génération.
+                <div class="bg-white card-shadow rounded-2xl p-4">
+                    <img src="/static/images/recommender_3_loss_curve.png" alt="Perte LightGCN" class="w-full h-auto rounded-lg border border-slate-100 object-cover" />
+                    <h5 class="text-xs font-bold text-slate-800 mt-3">Courbe de Perte BPR (BPR Loss)</h5>
+                    <p class="text-[11px] text-slate-500 mt-1">La convergence de la perte montre la régularisation efficace de l'embedding des noeuds.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact-section" class="scroll-mt-24 border-t border-slate-100 pt-16">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Info -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold uppercase tracking-wider">Support local</span>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-3">Nous contacter</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed mt-2">
+                            Pour toute demande de support technique ou intégration industrielle en entreprise, notre équipe se tient disponible.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold text-slate-800">Support Téléphone</h5>
+                                <p class="text-sm font-semibold text-slate-600">Aoudou, +237 650970526</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold text-slate-800">Messagerie SMTP</h5>
+                                <p class="text-sm font-semibold text-slate-600">npe.techs@gmail.com</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex gap-4 mt-3 text-[10px] text-slate-400 justify-center">
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>Utilisateur</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>Historique (A aimé)</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-pink-500 inline-block"></span>Recommandé par GCN</span>
+
+                <!-- Contact Form -->
+                <div class="lg:col-span-7 bg-white card-shadow p-6 rounded-3xl">
+                    <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-6">Envoyer un message</h4>
+                    <form id="contact-form" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-600 mb-1.5 font-semibold">Nom complet</label>
+                                <input type="text" name="name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-600 mb-1.5 font-semibold">Adresse Email</label>
+                                <input type="email" name="email" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-600 mb-1.5 font-semibold">Objet</label>
+                            <input type="text" name="subject" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-600 mb-1.5 font-semibold">Votre message</label>
+                            <textarea name="message" rows="4" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-emerald-500 focus:bg-white text-sm"></textarea>
+                        </div>
+                        <div id="contact-alert" class="hidden text-xs py-2 px-3 rounded-lg font-semibold"></div>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-md shadow-emerald-500/10">
+                            Envoyer le message
+                        </button>
+                    </form>
                 </div>
             </div>
         </section>
     </main>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-800/80 bg-slate-950 py-6 mt-12 text-center text-xs text-slate-500">
-        <p>© 2026 ENSPY - Projet IA4 - Moteur de Recommandation GCN</p>
+    <footer class="border-t border-slate-100 bg-slate-50 py-8 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p>© 2026 ENSPY - Projet IA4 - Recommandateur de films. Tous droits réservés.</p>
+            <p>Support technique : <strong>Aoudou (+237 650970526)</strong></p>
+        </div>
     </footer>
 
     <!-- Logic Script -->
@@ -134,7 +254,6 @@
                 return;
             }
 
-            // 1. Fetch History
             document.getElementById('history-loading').classList.remove('hidden');
             document.getElementById('history-empty').classList.add('hidden');
             document.getElementById('history-list').innerHTML = '';
@@ -147,23 +266,21 @@
                     alert(data.error);
                     return;
                 }
-                
                 const list = document.getElementById('history-list');
                 data.history.forEach(movie => {
                     const li = document.createElement('li');
-                    li.className = 'p-3 bg-slate-900/60 border border-slate-800/50 rounded-xl flex flex-col gap-0.5';
+                    li.className = 'p-3 bg-slate-50 border border-slate-100 rounded-xl flex flex-col gap-0.5';
                     li.innerHTML = `
-                        <span class="text-xs font-semibold text-white">${movie.title}</span>
-                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                        <span class="text-xs font-bold text-slate-900">${movie.title}</span>
+                        <div class="flex justify-between items-center text-[10px] text-slate-500">
                             <span>${movie.genres}</span>
-                            <span class="text-amber-400 font-bold">★ ${movie.rating.toFixed(1)}</span>
+                            <span class="text-amber-500 font-bold">★ ${movie.rating.toFixed(1)}</span>
                         </div>
                     `;
                     list.appendChild(li);
                 });
             });
 
-            // 2. Fetch Recommendations and Graph
             document.getElementById('rec-loading').classList.remove('hidden');
             document.getElementById('rec-empty').classList.add('hidden');
             document.getElementById('rec-grid').classList.add('hidden');
@@ -178,61 +295,90 @@
                     alert(data.error);
                     return;
                 }
-
-                // Render grid
                 const grid = document.getElementById('rec-grid');
                 grid.classList.remove('hidden');
-                
                 data.recommendations.forEach(rec => {
                     const card = document.createElement('div');
-                    card.className = 'p-4 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800/60 rounded-2xl flex flex-col justify-between hover:border-pink-500/30 transition';
+                    card.className = 'p-4 bg-white border border-slate-200 rounded-2xl flex flex-col justify-between hover:border-emerald-500 transition shadow-sm';
                     card.innerHTML = `
                         <div>
-                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-400 border border-pink-500/20">${rec.genres.split('|')[0]}</span>
-                            <h3 class="text-sm font-semibold text-white mt-2 mb-1">${rec.title}</h3>
-                            <p class="text-[10px] text-slate-400">${rec.genres}</p>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">${rec.genres.split('|')[0]}</span>
+                            <h3 class="text-sm font-bold text-slate-950 mt-2 mb-1">${rec.title}</h3>
+                            <p class="text-[10px] text-slate-500">${rec.genres}</p>
                         </div>
-                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-800/50">
-                            <span class="text-[10px] text-slate-500">ID Film: ${rec.movie_id}</span>
-                            <span class="text-xs text-pink-400 font-bold bg-pink-500/5 px-2 py-1 rounded">Score: ${rec.score.toFixed(2)}</span>
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                            <span class="text-[10px] text-slate-400">ID Film: ${rec.movie_id}</span>
+                            <span class="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded">Score: ${rec.score.toFixed(2)}</span>
                         </div>
                     `;
                     grid.appendChild(card);
                 });
 
-                // Render vis.js graph
                 document.getElementById('network-placeholder').classList.add('hidden');
                 const container = document.getElementById('network-viz');
-                
                 const graphData = {
                     nodes: new vis.DataSet(data.graph.nodes),
                     edges: new vis.DataSet(data.graph.edges)
                 };
                 
+                // Style nodes for light background
+                const styledNodes = data.graph.nodes.map(node => {
+                    if(node.id.startsWith('user_')) {
+                        node.color = '#3b82f6';
+                        node.font = { color: '#0f172a', face: 'Outfit', size: 12, bold: true };
+                    } else if(node.id.startsWith('movie_')) {
+                        node.color = '#10b981';
+                        node.font = { color: '#334155', face: 'Outfit', size: 10 };
+                    } else {
+                        node.color = '#ec4899';
+                        node.font = { color: '#0f172a', face: 'Outfit', size: 11, bold: true };
+                    }
+                    return node;
+                });
+                
                 const options = {
-                    nodes: {
-                        font: { color: '#ffffff', size: 11, face: 'Outfit' },
-                        borderWidth: 2
-                    },
+                    nodes: { borderWidth: 1.5 },
                     edges: {
-                        color: { color: 'rgba(255,255,255,0.15)', highlight: '#ec4899' },
-                        font: { color: '#94a3b8', size: 9, align: 'horizontal' },
+                        color: { color: '#cbd5e1', highlight: '#059669' },
+                        font: { color: '#64748b', size: 8, align: 'horizontal' },
                         arrows: { to: { enabled: true, scaleFactor: 0.5 } }
                     },
                     physics: {
-                        barnesHut: {
-                            gravitationalConstant: -2000,
-                            centralGravity: 0.3,
-                            springLength: 95
-                        }
+                        barnesHut: { gravitationalConstant: -1500, centralGravity: 0.25, springLength: 90 }
                     }
                 };
-                
-                network = new vis.Network(container, graphData, options);
+                network = new vis.Network(container, { nodes: new vis.DataSet(styledNodes), edges: graphData.edges }, options);
+            })
+            .catch(err => alert("Erreur lors de la génération."));
+        });
+
+        // Contact Form SMTP AJAX
+        document.getElementById('contact-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const alertDiv = document.getElementById('contact-alert');
+            alertDiv.classList.remove('hidden', 'bg-rose-50', 'text-rose-600', 'bg-emerald-50', 'text-emerald-600');
+            alertDiv.innerText = "Envoi du message en cours...";
+            alertDiv.className = "text-xs py-2 px-3 rounded-lg font-semibold bg-slate-50 text-slate-600 mb-3";
+
+            fetch('/contact/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alertDiv.innerText = "Votre message a été transmis avec succès via SMTP.";
+                    alertDiv.className = "text-xs py-2 px-3 rounded-lg font-semibold bg-emerald-50 text-emerald-600 mb-3";
+                    document.getElementById('contact-form').reset();
+                } else {
+                    alertDiv.innerText = "Erreur : " + data.error;
+                    alertDiv.className = "text-xs py-2 px-3 rounded-lg font-semibold bg-rose-50 text-rose-600 mb-3";
+                }
             })
             .catch(err => {
-                console.error("Error:", err);
-                alert("Erreur lors de la génération des recommandations.");
+                alertDiv.innerText = "Erreur réseau lors de la transmission.";
+                alertDiv.className = "text-xs py-2 px-3 rounded-lg font-semibold bg-rose-50 text-rose-600 mb-3";
             });
         });
     </script>
