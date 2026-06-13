@@ -64,7 +64,7 @@
   
   {\LARGE\bfseries\color{primary} PROPOSITION DE PLAN DE TRAVAIL\par}
   \vspace{0.5cm}
-  {\large Méthodologies, Démarches et Jalons de Réalisation des Projets Pratiques\par}
+  {\large Démarches d'Implémentation et Méthodologies de Mise en Œuvre des Projets d'IA\par}
   \vspace{0.2cm}
   {\large\bfseries UE : ANI-IA 4067 INTELLIGENCE ARTIFICIELLE (AIA4)\par}
   \vspace{2.5cm}
@@ -76,7 +76,7 @@
     \textbf{Sous la direction de :} & \textbf{M. Bitha Junior} (Enseignant ENSPY) \\
   \end{tabular}
   \vfill
-  {\small Année Académique 2025--2026\par}
+  {\small Proposition soumise le 23 avril 2026\par}
 \end{titlepage}
 
 %---------------------------------------------------------------
@@ -88,45 +88,55 @@
 %---------------------------------------------------------------
 %  INTRODUCTION
 %---------------------------------------------------------------
-\section{Introduction et Démarche Globale}
+\section{Introduction et Méthodologie Commune}
 
-Ce document décrit la proposition de plan de travail détaillé et les méthodologies scientifiques adoptées pour mener à bien les trois projets d'Intelligence Artificielle qui nous ont été alloués dans le cadre de l'UE ANI-IA 4067. Afin de garantir des solutions rigoureuses et prêtes pour la production, nous adoptons une méthodologie inspirée du cycle CRISP-DM, adaptée aux contraintes spécifiques du déploiement serverless.
+Ce rapport présente la proposition de plan de travail détaillé et les démarches méthodologiques envisagées pour mener à bien les trois projets pratiques d'Intelligence Artificielle qui nous ont été alloués dans le cadre du cours ANI-IA 4067. 
 
-\subsection{Les Trois Projets Alloués}
-Les trois chantiers techniques abordés dans ce plan sont :
+Afin de garantir des solutions logicielles et algorithmiques performantes et exploitables, nous adopterons une démarche standardisée découpée en six phases structurées, inspirée de la méthodologie industrielle CRISP-DM.
+
+\subsection{Présentation des Projets Alloués}
+Les trois projets alloués à réaliser sont :
 \begin{enumerate}
-    \item \textbf{Projet 1 : Réseaux de neurones convolutifs pour systèmes de recommandations} (Modélisation de graphes d'interaction par LightGCN).
-    \item \textbf{Projet 2 : Construction d’un moteur de recherche visuel} (Recherche d'images sémantique et colorimétrique MobileNetV2 / HSV).
-    \item \textbf{Projet 3 : Prédiction du comportement des clients bancaires} (Modélisation d'ensemble pour le scoring prédictif).
+    \item \textbf{Projet 1 : Réseaux de neurones convolutifs pour systèmes de recommandations} (Recommandation de films).
+    \item \textbf{Projet 2 : Construction d’un moteur de recherche visuel} (Recherche d'images e-commerce par similarité).
+    \item \textbf{Projet 3 : Prédiction du comportement des clients avec l'IA dans une banque} (Scoring d'opportunités marketing).
 \end{enumerate}
 
-\subsection{Démarche de Mise en Œuvre Commune}
-Chaque projet suit un pipeline rigoureux en six phases :
-\[
-\text{Cadrage} \rightarrow \text{Exploration (EDA)} \rightarrow \text{Modélisation} \rightarrow \text{Validation} \rightarrow \text{Intégration Web} \rightarrow \text{Déploiement}
-\]
+\subsection{Cycle de Réalisation Général}
+Pour chaque projet, le pipeline de travail suivra les étapes suivantes :
+\begin{itemize}
+    \item \textbf{Étape 1 : Analyse des besoins} -- Spécifications des objectifs fonctionnels.
+    \item \textbf{Étape 2 : Préparation des données} -- Exploration (EDA), nettoyage et feature engineering.
+    \item \textbf{Étape 3 : Modélisation mathématique} -- Choix et implémentation des algorithmes d'apprentissage automatique.
+    \item \textbf{Étape 4 : Validation scientifique} -- Calcul des métriques de performance hors-ligne.
+    \item \textbf{Étape 5 : Intégration logicielle} -- Développement d'une interface web interactive sous Django.
+    \item \textbf{Étape 6 : Déploiement et tests} -- Mise en production sur une plate-forme cloud serverless (Vercel).
+\end{itemize}
 
 \newpage
 
 %---------------------------------------------------------------
 %  PROJET 1
 %---------------------------------------------------------------
-\section{Projet 1 -- Systèmes de Recommandations Graph Neural Networks (LightGCN)}
+\section{Projet 1 -- Système de Recommandations Graph Neural Networks (LightGCN)}
 
-\subsection{Méthode et Solution Envisagées}
-Pour dépasser les limites de la factorisation de matrices classique (SVD) qui n'apprend que les interactions du premier ordre, nous proposons d'exploiter les structures de graphes relationnels.
+\subsection{Méthode et Solution Proposées}
+Pour pallier les insuffisances du filtrage collaboratif classique par factorisation de matrices SVD (qui ne capture que les relations directes), nous prévoyons de modéliser le problème sous forme de graphe relationnel.
 \begin{itemize}
-    \item \textbf{Représentation Bipartite :} Modélisation des interactions MovieLens sous forme de graphe bipartite non orienté $G = (U \cup I, E)$.
-    \item \textbf{Propagation par GNN (LightGCN) :} Normalisation symétrique de l'adjacence ($\tilde{A} = D^{-1/2} A D^{-1/2}$) et convolution sur 3 couches sans transformations non linéaires ni activations pour optimiser la vitesse d'apprentissage.
-    \item \textbf{Apprentissage Bayésien :} Optimisation de la perte pairwise BPR (Bayesian Personalized Ranking) avec l'optimiseur Adam.
-    \item \textbf{Stratégie de Repli (Fallback) :} En cas d'indisponibilité de PyTorch en production serverless, calcul des scores par produit matriciel NumPy sur les vecteurs d'embeddings pré-calculés.
+    \item \textbf{Modélisation en Graphe Bipartite :} Les interactions d'évaluation (MovieLens) seront représentées par un graphe bipartite non orienté $G = (U \cup I, E)$ où les arêtes relient les utilisateurs aux films.
+    \item \textbf{Architecture LightGCN :} Nous utiliserons un réseau neuronal sur graphes (GNN) simplifié, LightGCN, qui supprime les activations non linéaires et les projections de caractéristiques pour ne conserver que la propagation de voisinage par matrice d'adjacence normalisée symétrique :
+    \[
+    \tilde{\mathbf{A}} = \mathbf{D}^{-1/2} \mathbf{A} \mathbf{D}^{-1/2}
+    \]
+    \item \textbf{Algorithme d'Apprentissage :} Le modèle sera optimisé avec la perte de classement pairwise BPR (Bayesian Personalized Ranking) afin de classer les films pertinents au-dessus des films non observés.
+    \item \textbf{Inférence Temps Réel :} Les plongements latents optimisés seront sérialisés. Nous prévoyons d'implémenter un moteur d'inférence en production léger utilisant NumPy pour calculer les scores en temps réel par simple produit scalaire.
 \end{itemize}
 
-\subsection{Plan de Travail Détaillé et Jalons}
+\subsection{Plan de Travail Chronologique}
 \begin{itemize}
-    \item \textbf{Phase 1 : Exploration et Analyse (Jalons J1-J3) :} Analyse de la rareté de la matrice d'interactions, distribution des évaluations (biais des notes) et tracé de la longue traîne du catalogue.
-    \item \textbf{Phase 2 : Implémentation du Modèle (Jalons J4-J7) :} Codage de la classe de propagation `LightGCN` sous PyTorch, création de la boucle d'entraînement BPR Loss et écriture du module de validation (Recall@10 et NDCG@10).
-    \item \textbf{Phase 3 : Intégration et Déploiement (Jalons J8-J10) :} Création de l'application Django, implémentation d'une interface de visualisation interactive du sous-graphe en Vis.js, sérialisation pickle des vecteurs, et mise en production Vercel avec gestion statique WhiteNoise.
+    \item \textbf{Jalons 1 à 3 (Exploration) :} Analyse de la sparcité de la matrice d'interactions MovieLens, nettoyage et construction de l'adjacence globale creuse.
+    \item \textbf{Jalons 4 à 6 (Entraînement) :} Écriture sous PyTorch de la couche de convolution de graphe, implémentation du calcul matriciel creux et de la perte BPR.
+    \item \textbf{Jalons 7 à 10 (Déploiement) :} Intégration Django, mise en place d'une interface en Vis.js pour visualiser les liens d'interactions et déploiement final sur Vercel.
 \end{itemize}
 
 \newpage
@@ -136,19 +146,19 @@ Pour dépasser les limites de la factorisation de matrices classique (SVD) qui n
 %---------------------------------------------------------------
 \section{Projet 2 -- Moteur de Recherche Visuel de Vêtements (CBIR)}
 
-\subsection{Méthode et Solution Envisagées}
-Le moteur de recherche d'images s'appuie sur une architecture hybride à extraction de descripteurs adaptative :
+\subsection{Méthode et Solution Proposées}
+Nous prévoyons de concevoir une architecture d'extraction d'images hybride et adaptative :
 \begin{itemize}
-    \item \textbf{Descripteurs Sémantiques Profonds (MobileNetV2) :} Utilisation d'un CNN avec convolutions séparables en profondeur et goulots d'étranglement linéaires, pré-entraîné sur ImageNet, pour extraire un embedding de 1280 dimensions après Global Average Pooling.
-    \item \textbf{Descripteurs de Repli Légers (HSV + Spatial) :} En production serverless (sans PyTorch), calcul d'un histogramme joint 3D Hue-Saturation-Value à 128 dimensions, concaténé à une disposition spatiale en nuances de gris normalisée Z-score (256 dimensions) pour un vecteur de 384 dimensions.
-    \item \textbf{Recherche de Similarité :} Calcul de la similarité cosinus entre la requête et le catalogue indexé.
+    \item \textbf{Descripteurs Sémantiques (Deep Learning) :} Nous exploiterons le réseau pré-entraîné MobileNetV2 pour sa légèreté. L'extraction de caractéristiques profondes produira des embeddings de 1280 dimensions après Global Average Pooling.
+    \item \textbf{Descripteurs de Repli (Colorimétrie/Texture) :} Afin de faire face aux restrictions de taille de package sur Vercel (limitation des fonctions serverless à 15MB compressés interdisant PyTorch), nous développerons un extracteur mathématique purement basé sur NumPy et Pillow. Ce dernier calculera un histogramme joint 3D dans l'espace HSV (128 dimensions) concaténé à une grille de nuances de gris normalisée Z-score (256 dimensions).
+    \item \textbf{Recherche de Similarité :} La comparaison des images s'effectuera en mesurant la similarité cosinus entre la requête et les vecteurs de la base de données.
 \end{itemize}
 
-\subsection{Plan de Travail Détaillé et Jalons}
+\subsection{Plan de Travail Chronologique}
 \begin{itemize}
-    \item \textbf{Phase 1 : Préparation du Catalogue (Jalons J1-J2) :} Constitution de la base de vêtements (150 images), redimensionnement et création du script d'indexation hors-ligne (`train\_visual.py`).
-    \item \textbf{Phase 2 : Développement des Algorithmes (Jalons J3-J6) :} Écriture du code d'extraction MobileNetV2 et de l'extracteur HSV/Spatial sous NumPy/PIL. Validation sur 30 requêtes test pour mesurer la précision moyenne au Top-5 (P@5).
-    \item \textbf{Phase 3 : Interface utilisateur et Déploiement (Jalons J7-J10) :} Création de l'interface Django (formulaire de téléversement Drag-and-Drop, grille d'affichage des résultats triés par score de similarité) et déploiement serverless sur Vercel.
+    \item \textbf{Jalons 1 à 2 (Données) :} Sélection et structuration du catalogue d'images statiques (vêtements) et script de prétraitement.
+    \item \textbf{Jalons 3 à 5 (Modélisation) :} Implémentation de la fonction d'extraction MobileNetV2 et codage de l'algorithme colorimétrique HSV / Spatial sous NumPy.
+    \item \textbf{Jalons 6 à 10 (Intégration) :} Création de l'interface de téléversement (Drag-and-Drop) en Django, écriture du pipeline de recherche adaptatif gérant les fallbacks et déploiement.
 \end{itemize}
 
 \newpage
@@ -158,52 +168,51 @@ Le moteur de recherche d'images s'appuie sur une architecture hybride à extract
 %---------------------------------------------------------------
 \section{Projet 3 -- Prédiction du Comportement des Clients Bancaires}
 
-\subsection{Méthode et Solution Envisagées}
-Le scoring prédictif des prospects (campagne de marketing direct pour dépôts à terme) est basé sur le dataset UCI Bank Marketing :
+\subsection{Méthode et Solution Proposées}
+Pour le ciblage prédictif des campagnes de marketing direct de la banque (dataset UCI Bank Marketing), nous concevrons un pipeline de classification d'ensemble :
 \begin{itemize}
-    \item \textbf{Feature Engineering :} Traitement des valeurs manquantes, encodage OHE (One-Hot Encoding) pour les attributs qualitatifs (`job`, `education`, `marital`), standardisation robuste des variables continues (`age`, `balance`, `duration`).
-    \item \textbf{Traitement du Déséquilibre :} Ajustement des poids de classe inversement proportionnels aux fréquences empiriques.
-    \item \textbf{Modélisation d'Ensemble hybride :} Entraînement de trois modèles complémentaires :
+    \item \textbf{Feature Engineering :} Traitement des valeurs manquantes, encodage One-Hot des variables catégorielles et standardisation robuste des variables financières continues (comme le solde moyen).
+    \item \textbf{Classification d'Ensemble (Soft Voting) :} Afin de minimiser la variance et de maximiser la robustesse de prédiction, nous prévoyons de combiner trois classificateurs complémentaires :
     \begin{enumerate}
-        \item Régression Logistique régularisée L2 (L-BFGS).
-        \item Forêt Aléatoire (100 arbres, critère d'impureté de Gini).
-        \item Perceptron Multicouche (MLP) PyTorch ($64 \rightarrow 32 \rightarrow 1$ neurones) avec régularisation Dropout.
+        \item Une Régression Logistique pénalisée L2.
+        \item Une Forêt Aléatoire (100 arbres).
+        \item Un réseau de neurones artificiels MLP (Perceptron Multicouche) conçu sous PyTorch.
     \end{enumerate}
-    \item \textbf{Soft Voting :} Fusion des prédictions en faisant la moyenne arithmétique des probabilités d'adhésion individuelles.
+    \item \textbf{Gestion du déséquilibre :} Les cibles positives n'étant représentées qu'à hauteur de 11.7\%, nous appliquerons des coefficients de pondération inverses lors du calcul des pertes.
 \end{itemize}
 
-\subsection{Plan de Travail Détaillé et Jalons}
+\subsection{Plan de Travail Chronologique}
 \begin{itemize}
-    \item \textbf{Phase 1 : Analyse Exploratoire (Jalons J1-J3) :} Analyse univariée et multivariée sous Pandas, tracé des matrices de corrélation de Spearman pour identifier l'influence des variables de communication (comme la durée d'appel).
-    \item \textbf{Phase 2 : Pipeline de Modélisation (Jalons J4-J7) : } Conception du pipeline de prétraitement `ColumnTransformer`, entraînement des classificateurs sous scikit-learn et PyTorch, tracé des courbes ROC et matrices de confusion.
-    \item \textbf{Phase 3 : Intégration et Production (Jalons J8-J10) :} Conception de l'interface Django offrant deux modes (prédiction unitaire interactive et prédiction batch par import de fichier CSV), sérialisation du pipeline d'inference, et déploiement Vercel.
+    \item \textbf{Jalons 1 à 3 (Exploration) :} Analyse statistique descriptive univariée et multivariée du dataset bancaire, et sélection des variables significatives.
+    \item \textbf{Jalons 4 à 6 (Entraînement) :} Construction du pipeline de transformation scikit-learn, écriture du wrapper PyTorch MLP, et optimisation des hyperparamètres par validation croisée.
+    \item \textbf{Jalons 7 à 10 (Déploiement) :} Création d'une interface web Django proposant un simulateur d'opportunité client (formulaire unitaire) ainsi qu'un module de traitement de fichier CSV pour les prédictions en lot (batch), puis déploiement sur le Cloud.
 \end{itemize}
 
 \newpage
 
 %---------------------------------------------------------------
-%  CONCLUSION ET JALONS DE LIVRAISON
+%  PLANIFICATION TEMPORELLE
 %---------------------------------------------------------------
-\section{Jalons de Livraison et Planification Temporelle}
+\section{Planification Temporelle et Jalons}
 
-Le tableau ci-dessous résume le calendrier de travail sur les 10 semaines allouées pour le développement conjoint des trois solutions.
+Le tableau ci-dessous décrit la planification des livrables pour les 10 semaines de travail prévues à compter du 23 avril 2026.
 
 \bigskip
 
-\begin{tabularx}{\linewidth}{cXXl}
+\begin{tabularx}{\linewidth}{cXX}
   \toprule
-  \textbf{Semaine} & \textbf{Tâche Principale} & \textbf{Objectif Scientifique} & \textbf{Livrable} \\
+  \textbf{Période} & \textbf{Tâches Planifiées} & \textbf{Livrable attendu} \\
   \midrule
-  S1 -- S2 & EDA \& Préparation données & Compréhension des distributions & Notebooks d'analyse \\
-  S3 -- S4 & Codage algorithmes PyTorch & Initialisation LightGCN et MLP & Scripts `train\_*.py` \\
-  S5 -- S6 & Validation quantitative & Optimisation métriques ROC/Recall & Courbes et Tableaux \\
-  S7 -- S8 & Intégration Django Web & Architecture MVC et routage & Code local Django \\
-  S9 -- S10 & Optimisation \& Vercel & Intégration WhiteNoise et logs & Liens de Production \\
+  Semaines 1 -- 2 & EDA, nettoyage des datasets, feature engineering & Rapports d'analyse descriptive et scripts de préparation. \\
+  \addlinespace
+  Semaines 3 -- 5 & Entraînement des modèles IA locaux (PyTorch/Sklearn) & Code source des algorithmes et courbes d'apprentissage. \\
+  \addlinespace
+  Semaines 6 -- 7 & Évaluation quantitative et lissage des métriques & Tableaux comparatifs de performance (Recall, ROC-AUC). \\
+  \addlinespace
+  Semaines 8 -- 9 & Développement des applications web Django & Code source des contrôleurs Django, templates et visuels. \\
+  \addlinespace
+  Semaine 10 & Optimisation d'inférence NumPy, WhiteNoise et déploiement & Liens de déploiement en ligne et rapports finaux. \\
   \bottomrule
 \end{tabularx}
-
-\bigskip
-
-La réalisation de ce plan de travail a permis de livrer trois applications robustes, scientifiquement justifiées et hébergées sur le Cloud en environnement serverless.
 
 \end{document}
