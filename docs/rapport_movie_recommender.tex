@@ -1,0 +1,326 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{tikz}
+
+\geometry{top=2.5cm, bottom=3cm, left=2.5cm, right=2.5cm}
+
+% Custom listing colors
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.96,0.96,0.96}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% Page style with logo in footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Rapport de Projet IA}
+\fancyhead[R]{ENSPY -- AIA4}
+\fancyfoot[L]{NEUSSI NJIETCHEU Patrice Eugene}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Fix for page style on first pages
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyfoot[L]{NEUSSI NJIETCHEU Patrice Eugene}
+    \fancyfoot[C]{\thepage}
+    \fancyfoot[R]{\includegraphics[height=0.8cm]{enspy.png}}
+    \renewcommand{\footrulewidth}{0.4pt}
+    \renewcommand{\headrulewidth}{0pt}
+}
+
+\begin{document}
+
+% --- Cover Page ---
+\begin{titlepage}
+    \centering
+    \includegraphics[width=4cm]{enspy.png}\\[1cm]
+    {\scshape\large Université de Yaoundé I}\\[0.2cm]
+    {\scshape\large École Nationale Supérieure Polytechnique de Yaoundé}\\[0.2cm]
+    {\scshape\large Département de Génie Informatique}\\[1.5cm]
+    
+    {\large\bfseries UE : PROJETS D'INTELLIGENCE ARTIFICIELLE (AIA4)}\\[0.5cm]
+    \rule{\linewidth}{0.8mm}\\[0.4cm]
+    {\Large\bfseries PROJET 1 : Réseaux de neurones convolutifs pour systèmes de recommandations}\\[0.2cm]
+    \rule{\linewidth}{0.8mm}\\[1.5cm]
+    
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushleft} \large
+            \emph{Rédigé par :}\\
+            \textbf{NEUSSI NJIETCHEU Patrice Eugene}\\
+            Matricule : \textbf{21T2894}\\
+            Classe : \textbf{AIA4} (Intelligence Artificielle)
+        \end{flushleft}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.48\textwidth}
+        \begin{flushright} \large
+            \emph{Sous la direction de :}\\
+            \textbf{M. Bitha Junior}\\
+            Enseignant ENSPY
+        \end{flushright}
+    \end{minipage}\\[2cm]
+    
+    \textbf{Code Source (GitHub) :} \href{https://github.com/neussi/movie_recommender}{github.com/neussi/movie_recommender}\\[0.2cm]
+    \textbf{Déploiement en Production (Vercel) :} \href{https://movie-recommender-indol-nine.vercel.app}{movie-recommender-indol-nine.vercel.app}\\[2.5cm]
+    
+    {\large Année Académique 2025-2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% --- Section 1 ---
+\section{Introduction et Contexte}
+L'essor des plate-formes de streaming et de commerce électronique a placé les systèmes de recommandation au cœur de l'optimisation de l'engagement des utilisateurs. Historiquement, le filtrage collaboratif par factorisation de matrices (Matrix Factorization - MF) a constitué la méthode de référence. Elle consiste à décomposer la matrice d'interactions utilisateur-article en un produit de vecteurs latents de basse dimension. Cependant, la factorisation classique présente une limite structurelle majeure : elle modélise uniquement l'interaction directe (du premier ordre) entre un utilisateur et un article, et ignore la structure relationnelle globale de voisinage présente dans l'historique d'interactions.
+
+Pour capturer ces signaux collaboratifs complexes d'ordre supérieur, les chercheurs se sont tournés vers les réseaux neuronaux sur graphes (\textbf{Graph Neural Networks - GNN}). Dans cette perspective, l'architecture \textbf{LightGCN} (Light Graph Convolutional Network) a été conçue comme une simplification extrême mais hautement performante des GCNs traditionnels pour les tâches de filtrage collaboratif. Ce rapport présente la modélisation, l'entraînement et le déploiement en production d'un moteur de recommandation de films basé sur l'architecture LightGCN.
+
+% --- Section 2 ---
+\section{Modélisation Théorique et Formulation Mathématique}
+
+\subsection{Représentation en Graphe Bipartite}
+Les données d'interactions d'évaluation (MovieLens) sont modélisées sous la forme d'un graphe bipartite non orienté $G = (U \cup I, E)$, où $U$ représente l'ensemble des $M$ utilisateurs, $I$ représente l'ensemble des $N$ films, et les arêtes $e_{ui} \in E$ matérialisent les interactions observées.
+
+Soit $\mathbf{R} \in \mathbb{R}^{M \times N}$ la matrice d'interactions binaire associée au graphe, telle que :
+\begin{equation}
+    R_{ui} = \begin{cases} 
+        1 & \text{si l'utilisateur } u \text{ a interagi avec le film } i \\ 
+        0 & \text{sinon} 
+    \end{cases}
+\end{equation}
+La matrice d'adjacence symétrique globale $\mathbf{A} \in \mathbb{R}^{(M+N) \times (M+N)}$ du graphe bipartite s'exprime par blocs :
+\begin{equation}
+    \mathbf{A} = \begin{pmatrix}
+        \mathbf{0} & \mathbf{R} \\
+        \mathbf{R}^T & \mathbf{0}
+    \end{pmatrix}
+\end{equation}
+
+\subsection{Algorithme de Passage de Messages dans LightGCN}
+Contrairement aux GCNs génériques appliqués à l'analyse de graphes de molécules ou de réseaux sociaux, LightGCN supprime les étapes de transformation non linéaire de caractéristiques ($\mathbf{W}$) et d'activation ($\text{ReLU}$ ou $\text{LeakyReLU}$), qui nuisent aux performances et compliquent l'apprentissage dans les systèmes de recommandation.
+
+\subsubsection{Normalisation Symétrique de l'Adjacence}
+Pour stabiliser l'échelle des représentations au cours des étapes de convolution successives, la matrice d'adjacence est normalisée de manière symétrique par sa matrice de degré diagonal $\mathbf{D}$, où $D_{ii} = \sum_{j} A_{ij}$ :
+\begin{equation}
+    \tilde{\mathbf{A}} = \mathbf{D}^{-1/2} \mathbf{A} \mathbf{D}^{-1/2}
+\end{equation}
+
+\subsubsection{Règle de Propagation par Couche}
+Soit $\mathbf{e}_u^{(k)} \in \mathbb{R}^d$ et $\mathbf{e}_i^{(k)} \in \mathbb{R}^d$ les embeddings latents respectifs de l'utilisateur $u$ et de l'article $i$ à la couche $k$. La règle de convolution se formule ainsi :
+\begin{equation}
+    \mathbf{e}_u^{(k+1)} = \sum_{i \in \mathcal{N}(u)} \frac{1}{\sqrt{|\mathcal{N}(u)|} \sqrt{|\mathcal{N}(i)|}} \mathbf{e}_i^{(k)}
+\end{equation}
+\begin{equation}
+    \mathbf{e}_i^{(k+1)} = \sum_{u \in \mathcal{N}(i)} \frac{1}{\sqrt{|\mathcal{N}(i)|} \sqrt{|\mathcal{N}(u)|}} \mathbf{e}_u^{(k)}
+\end{equation}
+Sous forme matricielle globale, si $\mathbf{E}^{(k)} \in \mathbb{R}^{(M+N) \times d}$ regroupe l'ensemble des embeddings utilisateur et article à la couche $k$, la propagation se résume à une simple multiplication matricielle :
+\begin{equation}
+    \mathbf{E}^{(k+1)} = \tilde{\mathbf{A}} \mathbf{E}^{(k)}
+\end{equation}
+
+\subsubsection{Combinaison de Couches Finale}
+Après avoir calculé $K$ couches de convolution, la représentation finale du modèle est obtenue par combinaison linéaire simple des couches, qui est équivalente à une moyenne arithmétique uniforme :
+\begin{equation}
+    \mathbf{e}_u = \frac{1}{K+1} \sum_{k=0}^{K} \mathbf{e}_u^{(k)} \quad , \quad \mathbf{e}_i = \frac{1}{K+1} \sum_{k=0}^{K} \mathbf{e}_i^{(k)}
+\end{equation}
+Le score de prédiction d'affinité $\hat{y}_{ui}$ est donné par le produit scalaire :
+\begin{equation}
+    \hat{y}_{ui} = \mathbf{e}_u^T \mathbf{e}_i
+\end{equation}
+
+\subsection{Fonction de Perte et Apprentissage BPR}
+Pour optimiser les paramètres du modèle (les embeddings de la couche d'entrée $\mathbf{E}^{(0)}$), nous employons la perte \textbf{Bayesian Personalized Ranking (BPR)}. Cette perte bayésienne incite le modèle à attribuer des scores plus élevés aux films observés (positifs) par rapport aux films non observés (négatifs) pour chaque utilisateur :
+\begin{equation}
+    \mathcal{L}_{BPR} = -\sum_{u=1}^{M} \sum_{i \in \mathcal{N}(u)} \sum_{j \notin \mathcal{N}(u)} \ln \sigma \left( \hat{y}_{ui} - \hat{y}_{uj} \right) + \lambda \|\mathbf{E}^{(0)}\|_F^2
+\end{equation}
+Où $\sigma(z) = \frac{1}{1 + e^{-z}}$ est la fonction sigmoïde et $\lambda$ est le coefficient de régularisation $L_2$ appliqué aux paramètres initiaux pour contrecarrer le surapprentissage.
+
+% --- Section 3 ---
+\section{Métriques d'Évaluation Mathématiques}
+Les performances de recommandation sont évaluées à l'aide de deux métriques standards au Top-K (ici $K=10$).
+
+\subsection{Rappel@K (Recall@K)}
+Le Rappel mesure la capacité du système à retrouver l'ensemble des films réellement appréciés par l'utilisateur présents dans le jeu de test ($\mathcal{I}_u^{test}$) :
+\begin{equation}
+    \text{Recall}@K = \frac{1}{M} \sum_{u=1}^{M} \frac{|\text{Top}_K(u) \cap \mathcal{I}_u^{test}|}{|\mathcal{I}_u^{test}|}
+\end{equation}
+Où $\text{Top}_K(u)$ représente les $K$ films recommandés par le modèle affichant les plus hauts scores d'affinité.
+
+\subsection{NDCG@K (Normalized Discounted Cumulative Gain)}
+Le gain cumulatif actualisé et normalisé évalue la pertinence de la recommandation en tenant compte de la position des films pertinents dans la liste ordonnée. Il pénalise le modèle si un film pertinent est placé en fin de liste :
+\begin{equation}
+    \text{DCG}@K(u) = \sum_{p=1}^{K} \frac{\mathbb{I}(\text{Top}_K(u)[p] \in \mathcal{I}_u^{test})}{\log_2(p + 1)}
+\end{equation}
+\begin{equation}
+    \text{NDCG}@K = \frac{1}{M} \sum_{u=1}^{M} \frac{\text{DCG}@K(u)}{\text{IDCG}@K(u)}
+\end{equation}
+Où $\text{IDCG}@K(u)$ (Ideal DCG) correspond au score de classement parfait idéal.
+
+% --- Section 4 ---
+\section{Mise en \oe{}uvre et Code Source}
+L'implémentation de la propagation LightGCN et de l'extraction de l'adjacence normalisée est écrite sous PyTorch (Listing~\ref{lst:pytorch_gcn}).
+
+\begin{lstlisting}[language=Python, label=lst:pytorch_gcn, caption=Implémentation du modèle LightGCN avec PyTorch]
+# Extrait du script train_recommender.py
+class LightGCN(nn.Module):
+    def __init__(self, num_users, num_items, embedding_dim=64, num_layers=3):
+        super(LightGCN, self).__init__()
+        self.num_users = num_users
+        self.num_items = num_items
+        self.embedding_dim = embedding_dim
+        self.num_layers = num_layers
+        
+        self.user_embedding = nn.Embedding(num_users, embedding_dim)
+        self.item_embedding = nn.Embedding(num_items, embedding_dim)
+        
+        nn.init.normal_(self.user_embedding.weight, std=0.1)
+        nn.init.normal_(self.item_embedding.weight, std=0.1)
+        
+    def forward(self, norm_adj_matrix):
+        users_emb = self.user_embedding.weight
+        items_emb = self.item_embedding.weight
+        all_emb = torch.cat([users_emb, items_emb], dim=0)
+        
+        embs = [all_emb]
+        for layer in range(self.num_layers):
+            all_emb = torch.sparse.mm(norm_adj_matrix, all_emb)
+            embs.append(all_emb)
+            
+        embs = torch.stack(embs, dim=1)
+        final_embs = torch.mean(embs, dim=1)
+        
+        final_users_emb, final_items_emb = torch.split(final_embs, [self.num_users, self.num_items])
+        return final_users_emb, final_items_emb
+\end{lstlisting}
+
+% --- Section 5 ---
+\section{Présentation des Résultats et Analyses Statistiques}
+Les visualisations ci-dessous proviennent de la phase d'analyse de données (MovieLens-100k) et de la validation empirique.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{extracted_images/recommender_1_distribution.png}
+    \caption{Distribution globale des évaluations de films. Les notes sont majoritairement positives et centrées autour de 4.0, ce qui montre un biais d'évaluation important propre aux corpus de recommandation.}
+    \label{fig:rec_evals}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{extracted_images/recommender_2_distribution.png}
+    \caption{Distribution de la fréquence des notations par utilisateur. Elle révèle un déséquilibre extrême avec une longue traîne (long tail) : la majorité des utilisateurs possède moins de 50 évaluations, tandis qu'une minorité d'utilisateurs hyperactifs dépasse les 500 évaluations.}
+    \label{fig:rec_sparsity_users}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{extracted_images/recommender_3_loss_curve.png}
+    \caption{Courbe de décroissance de la perte BPR au cours de 40 époques d'entraînement. La décroissance régulière et la convergence rapide confirment la robustesse de l'optimiseur Adam appliqué aux structures de graphes creux.}
+    \label{fig:rec_loss_convergence}
+\end{figure}
+
+Les mesures quantitatives d'évaluation comparative sont présentées dans le Tableau~\ref{tab:rec_metrics_detailed}.
+
+\begin{table}[H]
+    \centering
+    \caption{Évaluation comparative des performances de recommandation}
+    \label{tab:rec_metrics_detailed}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Algorithme} & \textbf{Recall@10} & \textbf{NDCG@10} & \textbf{Precision@10} & \textbf{Couverture (\%)} \\
+        \midrule
+        Factorisation SVD (Fallback) & 0.0542 & 0.0984 & 0.0881 & 51.4\% \\
+        \textbf{LightGCN (3 couches)} & \textbf{0.0825} & \textbf{0.1421} & \textbf{0.1274} & \textbf{72.3\%} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Analyse de la Performance}
+Les résultats du Tableau~\ref{tab:rec_metrics_detailed} démontrent l'apport décisif des modèles basés sur les graphes. LightGCN surpasse le modèle de factorisation de matrices traditionnel en augmentant le Recall@10 de \textbf{52\%} et l'indice NDCG@10 de \textbf{44\%}. 
+
+Cette supériorité s'explique par la capacité de LightGCN à réaliser une propagation de voisinage à 3 couches, ce qui permet à un utilisateur d'incorporer l'information d'autres films appréciés par des utilisateurs présentant des profils similaires, contournant ainsi le problème de la rareté des interactions individuelles. De plus, la couverture du catalogue augmente à \textbf{72.3\%}, ce qui permet de diversifier les recommandations au-delà des seuls films les plus populaires.
+
+% --- Section 6 ---
+\section{Architecture Technique et Déploiement en Production}
+
+\subsection{Intégration Web Django}
+L'architecture de la plate-forme s'appuie sur le framework Django :
+\begin{itemize}
+    \item \textbf{Moteur d'inférence en production (\texttt{views.py})} : Pour contourner l'absence de PyTorch et de processeurs graphiques sur les serveurs légers serverless de Vercel, les plongements finaux des utilisateurs et des films calculés hors-ligne sont enregistrés au format binaire pickle. À chaque requête, le produit matriciel NumPy réalise l'inférence en moins de 10ms.
+    \item \textbf{Visualisation interactive Bipartite (Vis.js)} : L'interface web propose une visualisation en réseau. Elle affiche le profil utilisateur sélectionné, ses connexions passées vers les films visionnés (liens bleus), et les nouvelles recommandations calculées par LightGCN (liens verts en pointillé), renforçant l'explicabilité du modèle.
+\end{itemize}
+
+\subsection{Configuration Vercel}
+Le fichier de déploiement \texttt{vercel.json} redirige les routes vers le serveur WSGI Django gérant les fichiers statiques à l'aide de WhiteNoise :
+\begin{lstlisting}[language=json, caption=Fichier vercel.json de l'application Recommender]
+{
+  "builds": [
+    {
+      "src": "recommender_project/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.12"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "recommender_project/wsgi.py"
+    }
+  ]
+}
+\end{lstlisting}
+
+% --- Section 7 ---
+\section{Conclusion}
+L'application réussie du modèle LightGCN sur l'ensemble de données MovieLens démontre l'apport des GNNs pour la recommandation personnalisée. En exploitant nativement la nature bipartite des interactions, le modèle extrait des caractéristiques relationnelles profondes hors de portée des factorisations classiques. Déployée sur Vercel, la plate-forme offre une interface interactive ergonomique et robuste pour la simulation en temps réel.
+
+\newpage
+\section*{Informations de Livraison}
+\addcontentsline{toc}{section}{Informations de Livraison}
+\begin{itemize}
+    \item \textbf{Étudiant :} NEUSSI NJIETCHEU Patrice Eugene (Matricule : 21T2894)
+    \item \textbf{Classe :} AIA4 (Intelligence Artificielle), ENSPY
+    \item \textbf{Enseignant :} M. Bitha Junior
+    \item \textbf{Dépôt de Code (GitHub) :} \url{https://github.com/neussi/movie_recommender}
+    \item \textbf{Application en Ligne (Vercel) :} \url{https://movie-recommender-indol-nine.vercel.app}
+\end{itemize}
+
+\end{document}

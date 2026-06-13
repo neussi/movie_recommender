@@ -68,44 +68,44 @@ Crime           1199        12.3%
 ### 3.1 Vue Globale du Systeme
 
 ```
-+----------------------------------------------------------------+
-|                      CLIENT (Navigateur)                       |
-|         /recommender/  (Tab 1: Existant | Tab 2: Nouveau)      |
-+----------------------------|------------------------------------|+
++----------------------------------------------------------+
+|                      CLIENT (Navigateur)                 |
+|         /recommender/  (Tab 1: Existant | Tab 2: Nouveau)|
++----------------------------|----------------------------|+
                              | HTTP / AJAX / JSON
-+----------------------------v---------------------------------+
-|                   Django Application                        |
-|                                                             |
-|  +------------------+   +---------------------------+       |
-|  |  Views Layer     |   |  URL Router               |       |
-|  |  views.py        |   |  8 endpoints              |       |
-|  +--------+---------+   +---------------------------+       |
-|           |                                                 |
-|  +--------v-------------------------------------------+    |
-|  |            Recommender Engine                      |    |
-|  |                                                    |    |
-|  |  load_assets() -> pickle                           |    |
-|  |  {                                                 |    |
-|  |    user_embeddings:   (610, 64)                   |    |
-|  |    item_embeddings:   (9742, 64)                  |    |
-|  |    user_to_idx:       dict                        |    |
-|  |    item_to_idx:       dict                        |    |
-|  |    idx_to_item:       dict                        |    |
++----------------------------v-----------------------------+
+|                   Django Application                     |
+|                                                          |
+|  +------------------+   +---------------------------+    |
+|  |  Views Layer     |   |  URL Router               |    |
+|  |  views.py        |   |  8 endpoints              |    |
+|  +--------+---------+   +---------------------------+    |
+|           |                                              |
+|  +--------v-----------------------------------------+    |
+|  |            Recommender Engine                    |    |
+|  |                                                  |    |
+|  |  load_assets() -> pickle                         |    |
+|  |  {                                               |    |
+|  |    user_embeddings:   (610, 64)                  |    |
+|  |    item_embeddings:   (9742, 64)                 |    |
+|  |    user_to_idx:       dict                       |    |
+|  |    item_to_idx:       dict                       |    |
+|  |    idx_to_item:       dict                       |    |
 |  |    train_interactions: dict[user_idx -> [items]] |    |
-|  |    ratings_df:        DataFrame                   |    |
-|  |    movies_df:         DataFrame                   |    |
-|  |  }                                                |    |
-|  |                                                    |    |
-|  |  Inference:                                        |    |
-|  |    scores = item_embeddings @ u_emb               |    |
-|  |    mask seen items -> argsort -> Top-10            |    |
-|  +----------------------------------------------------+    |
-|                                                             |
-|  Cold-Start (Nouveau Profil):                               |
-|    e_new = sum(r_k * e_ik) / sum(r_k)                      |
-|    scores = item_embeddings @ e_new                         |
-|                                                             |
-+-------------------------------------------------------------+
+|  |    ratings_df:        DataFrame                  |    |
+|  |    movies_df:         DataFrame                  |    |
+|  |  }                                               |    |
+|  |                                                  |    |
+|  |  Inference:                                      |    |
+|  |    scores = item_embeddings @ u_emb              |    |
+|  |    mask seen items -> argsort -> Top-10          |    |
+|  +--------------------------------------------------+    |
+|                                                          |
+|  Cold-Start (Nouveau Profil):                            |
+|    e_new = sum(r_k * e_ik) / sum(r_k)                    |
+|    scores = item_embeddings @ e_new                      |
+|                                                          |
++----------------------------------------------------------+
                          |
                 Vercel Serverless Runtime (Python 3.12)
 ```
@@ -300,7 +300,7 @@ Coverage            72.3% du catalogue
 |              Vercel Platform               |
 |  Runtime: Python 3.12 Serverless           |
 |  Handler: recommender_project/wsgi.py      |
-|  Static:  /staticfiles/ via WhiteNoise    |
+|  Static:  /staticfiles/ via WhiteNoise     |
 +--------------------------------------------+
                     |
        https://movie-recommender-indol-nine.vercel.app
